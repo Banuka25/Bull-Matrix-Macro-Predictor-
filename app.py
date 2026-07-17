@@ -2,7 +2,6 @@ import streamlit as st
 import plotly.graph_objects as go
 import pandas as pd
 import datetime
-import requests
 import base64
 import os
 
@@ -106,6 +105,7 @@ def create_gauge_chart(score):
     fig.update_layout(paper_bgcolor="#0e1117", font={'color': "white"}, height=300, margin=dict(l=20, r=20, t=50, b=20))
     return fig
 
+# Helper function to save predictions WITH EXACT INPUTS
 def save_to_journal(event_name, score, direction_text, inputs_dict):
     entry = {
         "Date & Time": datetime.datetime.now().strftime("%Y-%m-%d %H:%M"),
@@ -117,6 +117,7 @@ def save_to_journal(event_name, score, direction_text, inputs_dict):
     st.session_state['journal'].append(entry)
     st.toast(f"✅ Saved to Journal!")
 
+# Helper to safely set Selectbox Index when Loading
 def get_idx(event_name, input_key, options_list):
     if st.session_state['loaded_data'] and st.session_state['loaded_data']['News Event'] == event_name:
         val = st.session_state['loaded_data']['Inputs'].get(input_key)
@@ -124,98 +125,13 @@ def get_idx(event_name, input_key, options_list):
             return options_list.index(val)
     return 0
 
+# Helper to safely set Number Input when Loading
 def get_num_val(event_name, input_key, default_val):
     if st.session_state['loaded_data'] and st.session_state['loaded_data']['News Event'] == event_name:
         return st.session_state['loaded_data']['Inputs'].get(input_key, default_val)
     return default_val
 
-# --- BULLETPROOF API FETCH WITH DEBUG MODE ---
-# Cache ඉවත් කළා, සෑම පරීක්ෂාවකදීම Live අදින්න.
-def fetch_macro_data_from_fmp(event_type):
-    try:
-        api_key = st.secrets.get("FMP_API_KEY")
-        if not api_key: return "NO_KEY", "API Key is missing in Secrets."
-        
-        today = datetime.datetime.now()
-        start = (today - datetime.timedelta(days=90)).strftime("%Y-%m-%d")
-        end = (today + datetime.timedelta(days=30)).strftime("%Y-%m-%d")
-        
-        url = f"https://financialmodelingprep.com/api/v3/economic_calendar?from={start}&to={end}&apikey={api_key}"
-        res = requests.get(url)
-        
-        if res.status_code == 200:
-            data = res.json()
-            
-            if isinstance(data, dict) and "Error Message" in data:
-                return "API_ERROR", data["Error Message"]
-                
-            if isinstance(data, list):
-                if len(data) == 0:
-                    return "API_EMPTY", "දත්ත ගබඩාව හිස්ව පවතී (Free Tier Limit)"
-
-                keywords = []
-                if event_type == "CPI (Consumer Price Index)": keywords = ["cpi", "consumer price", "inflation"]
-                elif event_type == "NFP (Non-Farm Payrolls)": keywords = ["non farm", "nonfarm", "payrolls", "employment"]
-                elif event_type == "Core PCE Price Index": keywords = ["pce", "personal consumption"]
-                elif event_type == "Advance GDP": keywords = ["gdp", "gross domestic product"]
-                elif event_type == "FOMC Rate Decision": keywords = ["fed", "fomc", "interest rate", "rate decision"]
-
-                matches = []
-                debug_us_events = [] # API එකෙන් එවන US නිවුස් මොනවද කියලා බලාගන්න
-                
-                for item in data:
-                    country = str(item.get("country", "")).upper()
-                    currency = str(item.get("currency", "")).upper()
-                    
-                    if country in ["US", "UNITED STATES", "USA"] or currency == "USD":
-                        event_name = str(item.get("event", "")).strip()
-                        
-                        # Debugging සඳහා අලුත්ම US නිවුස් ටික එකතු කරගන්නවා
-                        if event_name and event_name not in debug_us_events:
-                            debug_us_events.append(event_name)
-                            
-                        event_lower = event_name.lower()
-                        for kw in keywords:
-                            if kw in event_lower:
-                                prev_raw = item.get("previous")
-                                fc_raw = item.get("estimate")
-                                act_raw = item.get("actual")
-
-                                # Safe Float Conversion Logic
-                                def safe_float(v):
-                                    try:
-                                        if v is None: return None
-                                        v_str = str(v).replace(",", "").strip()
-                                        if v_str == "": return None
-                                        return float(v_str)
-                                    except: return None
-                                    
-                                p_val = safe_float(prev_raw)
-                                f_val = safe_float(fc_raw)
-                                a_val = safe_float(act_raw)
-                                
-                                # Aggressive Fallback: අගයක් කොහෙන් හරි අදිනවා
-                                if p_val is None: p_val = a_val
-                                if f_val is None: f_val = p_val
-                                
-                                if p_val is not None and f_val is not None:
-                                    if "payroll" in event_lower and p_val > 500:
-                                        matches.append((p_val/1000, f_val/1000))
-                                    else:
-                                        matches.append((p_val, f_val))
-                
-                if matches:
-                    return matches[-1] # අලුත්ම දත්තය ලබා දෙයි
-                else:
-                    # අපිට නිවුස් එක අහු වුණේ නැත්නම්, API එකෙන් ආපු වෙනත් US නිවුස් 8ක් පෙන්නනවා
-                    debug_us_events.reverse()
-                    return "DEBUG_NO_MATCH", debug_us_events[:8]
-                    
-    except Exception as e:
-        return "CODE_ERROR", str(e)
-        
-    return None, None
-
+# --- Custom SVG Icons Definition ---
 svg_bullish = '''<svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><circle cx="12" cy="12" r="12" fill="#4CAF50"/><path d="M7 15 L10.5 11.5 L13 14 L17 9 M13 9 H17 V13" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>'''
 svg_bearish = '''<svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><circle cx="12" cy="12" r="12" fill="#F44336"/><path d="M7 9 L10.5 12.5 L13 10 L17 15 M13 15 H17 V11" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>'''
 svg_ranging = '''<svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><circle cx="12" cy="12" r="12" fill="#FFC107"/><path d="M8 10 L6 12 L8 14 M16 10 L18 12 L16 14 M6 12 H18" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>'''
@@ -248,36 +164,6 @@ with tab1:
 
     major_news = st.sidebar.radio("Choose Event:", events_list, index=default_event_idx)
 
-    # --- ADVANCED API Auto-Fetch Logic ---
-    st.sidebar.markdown("---")
-    auto_fetch = st.sidebar.checkbox("📡 Auto-Fetch API Data (FMP)", value=False, help="Requires FMP_API_KEY in Streamlit Secrets")
-    
-    api_prev, api_fc = None, None
-    if auto_fetch:
-        api_prev, api_fc = fetch_macro_data_from_fmp(major_news)
-        
-        if api_prev == "NO_KEY":
-            st.sidebar.warning("⚠️ API Key is missing in Secrets.")
-            api_prev, api_fc = None, None
-        elif api_prev == "API_ERROR":
-            st.sidebar.error(f"⚠️ FMP Error: {api_fc}") 
-            api_prev, api_fc = None, None
-        elif api_prev == "API_EMPTY":
-            st.sidebar.warning(f"⚠️ {api_fc}")
-            api_prev, api_fc = None, None
-        elif api_prev == "CODE_ERROR":
-            st.sidebar.error("⚠️ Connection Error. Check requirements.txt.")
-            api_prev, api_fc = None, None
-        elif api_prev == "DEBUG_NO_MATCH":
-            st.sidebar.warning("⏳ නිවුස් එක අහු වුණේ නෑ. API එක එව්ව වෙනත් US දත්ත:")
-            for e in api_fc:
-                st.sidebar.caption(f"🔹 {e}")
-            api_prev, api_fc = None, None
-        elif api_prev is not None and api_fc is not None:
-            st.sidebar.success("✅ Live Data Synced!")
-        else:
-            st.sidebar.info("⏳ No upcoming data found for this event.")
-
     # --- Bull Matrix Personal Branding Footer ---
     st.sidebar.markdown("<br><br><br>", unsafe_allow_html=True)
     st.sidebar.markdown("---")
@@ -287,6 +173,7 @@ with tab1:
         with open(logo_path, "r") as f:
             svg_data = f.read()
         b64_svg = base64.b64encode(svg_data.encode("utf-8")).decode("utf-8")
+        # Inverting colors via CSS to make the black SVG white/bright on the dark sidebar
         logo_html = f'''
         <div style="text-align: center; margin-bottom: -10px;">
             <img src="data:image/svg+xml;base64,{b64_svg}" width="65%" style="filter: invert(1) brightness(2);">
@@ -368,14 +255,10 @@ with tab1:
         with col_left:
             st.subheader("📥 Input Sub-Report Data")
             col_prev, col_fc = st.columns(2)
-            
-            default_cpi_prev = api_prev if api_prev is not None else 3.1
-            default_cpi_fc = api_fc if api_fc is not None else 2.9
-            
             with col_prev:
-                cpi_previous = st.number_input("📉 Previous Value (%):", value=get_num_val(major_news, "cpi_prev", default_cpi_prev), step=0.1, format="%.1f")
+                cpi_previous = st.number_input("📉 Previous Value (%):", value=get_num_val(major_news, "cpi_prev", 3.1), step=0.1, format="%.1f")
             with col_fc:
-                cpi_forecast = st.number_input("📊 Market Forecast (%):", value=get_num_val(major_news, "cpi_fc", default_cpi_fc), step=0.1, format="%.1f")
+                cpi_forecast = st.number_input("📊 Market Forecast (%):", value=get_num_val(major_news, "cpi_fc", 2.9), step=0.1, format="%.1f")
             st.markdown("<br>", unsafe_allow_html=True)
             
             ppi_input = st.selectbox("1. PPI Trend:", opt_ppi, index=get_idx(major_news, "ppi", opt_ppi))
@@ -480,14 +363,10 @@ with tab1:
         with col_left:
             st.subheader("📥 Input Sub-Report Data")
             col_prev, col_fc = st.columns(2)
-            
-            default_nfp_prev = int(api_prev) if api_prev is not None else 200
-            default_nfp_fc = int(api_fc) if api_fc is not None else 180
-            
             with col_prev:
-                nfp_previous = st.number_input("📉 Previous Value (k):", value=int(get_num_val(major_news, "nfp_prev", default_nfp_prev)), step=10, format="%d")
+                nfp_previous = st.number_input("📉 Previous Value (k):", value=int(get_num_val(major_news, "nfp_prev", 200)), step=10, format="%d")
             with col_fc:
-                nfp_forecast = st.number_input("📊 Market Forecast (k):", value=int(get_num_val(major_news, "nfp_fc", default_nfp_fc)), step=10, format="%d")
+                nfp_forecast = st.number_input("📊 Market Forecast (k):", value=int(get_num_val(major_news, "nfp_fc", 180)), step=10, format="%d")
             st.markdown("<br>", unsafe_allow_html=True)
 
             adp_input = st.selectbox("1. ADP Employment Change:", opt_adp, index=get_idx(major_news, "adp", opt_adp))
@@ -591,14 +470,10 @@ with tab1:
         with col_left:
             st.subheader("📥 Input Sub-Report Data")
             col_prev, col_fc = st.columns(2)
-            
-            default_pce_prev = api_prev if api_prev is not None else 0.3
-            default_pce_fc = api_fc if api_fc is not None else 0.2
-            
             with col_prev:
-                pce_previous = st.number_input("📉 Previous Value (%):", value=get_num_val(major_news, "pce_prev", default_pce_prev), step=0.1, format="%.1f")
+                pce_previous = st.number_input("📉 Previous Value (%):", value=get_num_val(major_news, "pce_prev", 0.3), step=0.1, format="%.1f")
             with col_fc:
-                pce_forecast = st.number_input("📊 Market Forecast (%):", value=get_num_val(major_news, "pce_fc", default_pce_fc), step=0.1, format="%.1f")
+                pce_forecast = st.number_input("📊 Market Forecast (%):", value=get_num_val(major_news, "pce_fc", 0.2), step=0.1, format="%.1f")
             st.markdown("<br>", unsafe_allow_html=True)
 
             cpi_input = st.selectbox("1. Recent Core CPI Release:", opt_cpi, index=get_idx(major_news, "cpi", opt_cpi))
@@ -700,14 +575,10 @@ with tab1:
         with col_left:
             st.subheader("📥 Input Sub-Report Data")
             col_prev, col_fc = st.columns(2)
-            
-            default_gdp_prev = api_prev if api_prev is not None else 2.1
-            default_gdp_fc = api_fc if api_fc is not None else 1.8
-            
             with col_prev:
-                gdp_previous = st.number_input("📉 Previous Value (%):", value=get_num_val(major_news, "gdp_prev", default_gdp_prev), step=0.1, format="%.1f")
+                gdp_previous = st.number_input("📉 Previous Value (%):", value=get_num_val(major_news, "gdp_prev", 2.1), step=0.1, format="%.1f")
             with col_fc:
-                gdp_forecast = st.number_input("📊 Market Forecast (%):", value=get_num_val(major_news, "gdp_fc", default_gdp_fc), step=0.1, format="%.1f")
+                gdp_forecast = st.number_input("📊 Market Forecast (%):", value=get_num_val(major_news, "gdp_fc", 1.8), step=0.1, format="%.1f")
             st.markdown("<br>", unsafe_allow_html=True)
 
             atlanta_fed = st.selectbox("1. Atlanta Fed GDPNow Tracker:", opt_atl, index=get_idx(major_news, "atl", opt_atl))
@@ -812,14 +683,10 @@ with tab1:
         with col_left:
             st.subheader("📥 Input Sub-Report Data")
             col_prev, col_fc = st.columns(2)
-            
-            default_fomc_prev = api_prev if api_prev is not None else 5.50
-            default_fomc_fc = api_fc if api_fc is not None else 5.25
-            
             with col_prev:
-                fomc_previous = st.number_input("📉 Previous Rate (%):", value=get_num_val(major_news, "fomc_prev", default_fomc_prev), step=0.25, format="%.2f")
+                fomc_previous = st.number_input("📉 Previous Rate (%):", value=get_num_val(major_news, "fomc_prev", 5.50), step=0.25, format="%.2f")
             with col_fc:
-                fomc_forecast = st.number_input("📊 Market Forecast (%):", value=get_num_val(major_news, "fomc_fc", default_fomc_fc), step=0.25, format="%.2f")
+                fomc_forecast = st.number_input("📊 Market Forecast (%):", value=get_num_val(major_news, "fomc_fc", 5.25), step=0.25, format="%.2f")
             st.markdown("<br>", unsafe_allow_html=True)
 
             fedwatch = st.selectbox("1. CME FedWatch Probability:", opt_fed, index=get_idx(major_news, "fed", opt_fed))
