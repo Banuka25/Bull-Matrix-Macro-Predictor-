@@ -20,6 +20,7 @@ if 'journal' not in st.session_state:
 if 'loaded_data' not in st.session_state:
     st.session_state['loaded_data'] = None
 
+# --- MOBILE RESPONSIVE PROFESSIONAL UI CSS ---
 st.markdown("""
     <style>
     .main { background-color: #0e1117; color: #ffffff; }
@@ -49,29 +50,27 @@ st.markdown("""
         transform: scale(1.05);
     }
     
-    /* DOWNLOAD CSV BUTTON */
-    .stDownloadButton > button {
+    /* DOWNLOAD & CLEAR BUTTONS RESPONSIVENESS */
+    .stDownloadButton > button,
+    .stButton > button[kind="primary"] {
         border-radius: 20px !important;
+        transition: all 0.3s ease !important;
+        width: 100% !important; /* Full width inside flex container */
+    }
+    .stDownloadButton > button {
         border: 1px solid #1f77b4 !important;
         background-color: transparent !important;
         color: #1f77b4 !important;
-        transition: all 0.3s ease !important;
-        width: 155px !important; 
     }
     .stDownloadButton > button:hover {
         background-color: #1f77b4 !important;
         color: white !important;
         transform: scale(1.05);
     }
-
-    /* CLEAR ALL DATA BUTTON (Primary) */
     .stButton > button[kind="primary"] {
-        border-radius: 20px !important;
         border: 1px solid #ff4b4b !important;
         background-color: transparent !important;
         color: #ff4b4b !important;
-        transition: all 0.3s ease !important;
-        width: 155px !important; 
     }
     .stButton > button[kind="primary"]:hover {
         background-color: #ff4b4b !important;
@@ -79,43 +78,77 @@ st.markdown("""
         transform: scale(1.05);
     }
     
-    /* Ultra-Compact & Elegant Circular Delete Button */
-    button[title="Delete this entry"] {
+    /* Ultra-Compact & Elegant Circular Delete/Load Buttons */
+    button[title="Delete this entry"], button[title="Load this entry"] {
         width: 20px !important; height: 20px !important;
         min-height: 20px !important; min-width: 20px !important;
         padding: 0 !important; border-radius: 50% !important; 
-        background-color: transparent !important; color: #ff4b4b !important; 
-        border: 1px solid #ff4b4b !important; 
+        background-color: transparent !important; 
         display: inline-flex !important; align-items: center !important; justify-content: center !important;
         transition: all 0.2s ease !important;
     }
-    button[title="Delete this entry"]:hover {
-        background-color: #ff4b4b !important; color: white !important; transform: scale(1.1) !important;
-    }
-    button[title="Delete this entry"] div, button[title="Delete this entry"] p {
-        margin: 0 !important; padding: 0 !important; line-height: 1 !important; font-size: 10px !important;
-        display: flex !important; align-items: center !important; justify-content: center !important;
-        width: 100% !important; height: 100% !important; color: inherit !important;
-    }
-
-    /* Ultra-Compact & Elegant Circular LOAD Button */
-    button[title="Load this entry"] {
-        width: 20px !important; height: 20px !important;
-        min-height: 20px !important; min-width: 20px !important;
-        padding: 0 !important; border-radius: 50% !important; 
-        background-color: transparent !important; color: #1f77b4 !important; 
-        border: 1px solid #1f77b4 !important; 
-        display: inline-flex !important; align-items: center !important; justify-content: center !important;
-        transition: all 0.2s ease !important;
-    }
-    button[title="Load this entry"]:hover {
-        background-color: #1f77b4 !important; color: white !important; transform: scale(1.1) !important;
-    }
+    button[title="Delete this entry"] { border: 1px solid #ff4b4b !important; color: #ff4b4b !important; }
+    button[title="Delete this entry"]:hover { background-color: #ff4b4b !important; color: white !important; transform: scale(1.1) !important; }
+    
+    button[title="Load this entry"] { border: 1px solid #1f77b4 !important; color: #1f77b4 !important; }
+    button[title="Load this entry"]:hover { background-color: #1f77b4 !important; color: white !important; transform: scale(1.1) !important; }
+    
+    button[title="Delete this entry"] div, button[title="Delete this entry"] p,
     button[title="Load this entry"] div, button[title="Load this entry"] p {
         margin: 0 !important; padding: 0 !important; line-height: 1 !important; font-size: 10px !important;
         display: flex !important; align-items: center !important; justify-content: center !important;
         width: 100% !important; height: 100% !important; color: inherit !important;
     }
+
+    /* ------------------------------------------------------------------- */
+    /* UI FIX 1: Tooltips (Popups) cutoff fix on mobile */
+    div[data-baseweb="tooltip"], div[data-baseweb="popover"] {
+        max-width: 85vw !important;
+        white-space: normal !important;
+        word-wrap: break-word !important;
+        text-align: left !important;
+    }
+
+    /* UI FIX 2: Vertical Divider turns into a clean Horizontal line on mobile */
+    @media (max-width: 768px) {
+        .vertical-divider {
+            min-height: 1px !important;
+            height: 1px !important;
+            border-left: none !important;
+            border-top: 2px solid rgba(255, 255, 255, 0.15) !important;
+            width: 100% !important;
+            margin: 25px 0 !important;
+        }
+    }
+
+    /* UI FIX 3: Trading Journal Horizontal Scrolling & Layout on Mobile */
+    div[data-testid="stHorizontalBlock"]:has(.journal-row-marker) {
+        flex-wrap: nowrap !important;
+        overflow-x: auto !important;
+        padding-bottom: 10px;
+    }
+    div[data-testid="stHorizontalBlock"]:has(.journal-row-marker) > div[data-testid="column"]:nth-child(1) { min-width: 130px !important; }
+    div[data-testid="stHorizontalBlock"]:has(.journal-row-marker) > div[data-testid="column"]:nth-child(2) { min-width: 180px !important; }
+    div[data-testid="stHorizontalBlock"]:has(.journal-row-marker) > div[data-testid="column"]:nth-child(3) { min-width: 90px !important; }
+    div[data-testid="stHorizontalBlock"]:has(.journal-row-marker) > div[data-testid="column"]:nth-child(4) { min-width: 170px !important; }
+    div[data-testid="stHorizontalBlock"]:has(.journal-row-marker) > div[data-testid="column"]:nth-child(5) { min-width: 80px !important; }
+    
+    div[data-testid="stHorizontalBlock"]:has(.journal-row-marker) div[data-testid="stHorizontalBlock"] {
+        flex-wrap: nowrap !important;
+        min-width: 70px !important;
+    }
+
+    /* UI FIX 4: Download & Clear buttons perfectly horizontal on mobile */
+    div[data-testid="stHorizontalBlock"]:has(.action-btn-marker) {
+        flex-wrap: nowrap !important;
+        gap: 15px !important;
+    }
+    div[data-testid="stHorizontalBlock"]:has(.action-btn-marker) > div[data-testid="column"] {
+        min-width: 0 !important;
+        flex: 1 1 50% !important;
+    }
+    /* ------------------------------------------------------------------- */
+
     </style>
 """, unsafe_allow_html=True)
 
@@ -191,7 +224,7 @@ else:
 
 st.markdown("---")
 
-# Reordered Tabs
+# Ordered Tabs
 tab_names = ["🔮 Live Predictor", "📅 Live Calendar", "📓 Trading Journal", "📚 Historical Case Studies"] if lang == "English" else ["🔮 සජීවී පුරෝකථනය", "📅 සජීවී දින දර්ශනය", "📓 ට්‍රේඩින් ජර්නල් එක", "📚 අතීත සිදුවීම් අධ්‍යයනය"]
 tab1, tab2, tab3, tab4 = st.tabs(tab_names)
 
@@ -249,19 +282,24 @@ with tab1:
             nas100_val = us30_val = spx500_val = status_val
             nas100_svg = us30_svg = spx500_svg = status_svg
 
+        # UI FIX 4: Pairs and Indices are now perfectly responsive & horizontal on mobile via Flexbox
         st.subheader("🗺️ Expected Impact on Major Pairs & Gold" if lang == "English" else "🗺️ ප්‍රධාන වෙළඳපොළවල් සඳහා බලපෑම")
-        p_col1, p_col2, p_col3, p_col4, p_col5 = st.columns(5)
-        p_col1.markdown(render_custom_metric("EUR/USD", eurusd_val, eurusd_svg), unsafe_allow_html=True)
-        p_col2.markdown(render_custom_metric("GBP/USD", gbpusd_val, gbpusd_svg), unsafe_allow_html=True)
-        p_col3.markdown(render_custom_metric("XAU/USD (Gold)", xauusd_val, xauusd_svg), unsafe_allow_html=True)
-        p_col4.markdown(render_custom_metric("USD/JPY", usdjpy_val, usdjpy_svg), unsafe_allow_html=True)
-        p_col5.markdown(render_custom_metric("USD/CAD", usdcad_val, usdcad_svg), unsafe_allow_html=True)
-        st.markdown("") 
+        pairs_html = f"""<div style="display: flex; flex-wrap: wrap; gap: 15px; justify-content: space-between; margin-bottom: 20px;">
+        <div style="flex: 1 1 18%; min-width: 130px;">{render_custom_metric('EUR/USD', eurusd_val, eurusd_svg)}</div>
+        <div style="flex: 1 1 18%; min-width: 130px;">{render_custom_metric('GBP/USD', gbpusd_val, gbpusd_svg)}</div>
+        <div style="flex: 1 1 18%; min-width: 130px;">{render_custom_metric('XAU/USD (Gold)', xauusd_val, xauusd_svg)}</div>
+        <div style="flex: 1 1 18%; min-width: 130px;">{render_custom_metric('USD/JPY', usdjpy_val, usdjpy_svg)}</div>
+        <div style="flex: 1 1 18%; min-width: 130px;">{render_custom_metric('USD/CAD', usdcad_val, usdcad_svg)}</div>
+        </div>"""
+        st.markdown(pairs_html, unsafe_allow_html=True)
+        
         st.subheader("📊 Expected Impact on Major US Indices" if lang == "English" else "📊 ප්‍රධාන දර්ශක (Indices) සඳහා බලපෑම")
-        i_col1, i_col2, i_col3 = st.columns(3)
-        i_col1.markdown(render_custom_metric("NASDAQ (NAS100)", nas100_val, nas100_svg), unsafe_allow_html=True)
-        i_col2.markdown(render_custom_metric("US30 (Dow Jones)", us30_val, us30_svg), unsafe_allow_html=True)
-        i_col3.markdown(render_custom_metric("S&P 500 (SPX500)", spx500_val, spx500_svg), unsafe_allow_html=True)
+        indices_html = f"""<div style="display: flex; flex-wrap: wrap; gap: 15px; justify-content: flex-start; margin-bottom: 10px;">
+        <div style="flex: 1 1 30%; min-width: 160px; max-width: 250px;">{render_custom_metric('NASDAQ (NAS100)', nas100_val, nas100_svg)}</div>
+        <div style="flex: 1 1 30%; min-width: 160px; max-width: 250px;">{render_custom_metric('US30 (Dow Jones)', us30_val, us30_svg)}</div>
+        <div style="flex: 1 1 30%; min-width: 160px; max-width: 250px;">{render_custom_metric('S&P 500 (SPX500)', spx500_val, spx500_svg)}</div>
+        </div>"""
+        st.markdown(indices_html, unsafe_allow_html=True)
 
     def render_save_button(event_name, score, direction, inputs_dict):
         st.markdown("<br>", unsafe_allow_html=True)
@@ -373,7 +411,7 @@ with tab1:
             f_lbl = "Forecast" if lang == "English" else "Forecast (අපේක්ෂාව)"
             r_lbl = "AI Expected Range" if lang == "English" else "AI Expected Range (අනුමානය)"
 
-            st.markdown(f'''<div style="background-color: rgba(255, 255, 255, 0.03); border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 10px; padding: 15px;"><div style="font-size: 14px; color: #a0a0a0; margin-bottom: 15px; display: flex; align-items: center; gap: 8px;">🤖 <b>AI Advanced Forecast Radar</b></div><div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;"><div style="text-align: left;"><div style="font-size: 11px; color: gray; text-transform: uppercase;">{p_lbl}</div><div style="font-size: 22px; font-weight: bold; color: #a0a0a0;">{cpi_previous:.1f}%</div></div><div style="text-align: center;"><div style="font-size: 11px; color: gray; text-transform: uppercase;">{f_lbl}</div><div style="font-size: 22px; font-weight: bold; color: white;">{cpi_forecast:.1f}%</div></div><div style="text-align: right;"><div style="font-size: 11px; color: gray; text-transform: uppercase;">{r_lbl}</div><div style="font-size: 22px; font-weight: bold; color: {dev_color};">{lower_bound:.2f}% - {upper_bound:.2f}%</div></div></div><div style="background: rgba(0,0,0,0.3); padding: 10px; border-radius: 5px;"><div style="font-size: 14px; color: {dev_color}; font-weight: bold; text-align: center; margin-bottom: 5px;">{dev_signal}</div><div style="font-size: 12px; color: #d0d0d0; text-align: center; line-height: 1.4;">{dev_desc}</div></div></div>''', unsafe_allow_html=True)
+            st.markdown(f'''<div style="background-color: rgba(255, 255, 255, 0.03); border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 10px; padding: 15px;"><div style="font-size: 14px; color: #a0a0a0; margin-bottom: 15px; display: flex; flex-wrap: wrap; align-items: center; gap: 8px;">🤖 <b>AI Advanced Forecast Radar</b></div><div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;"><div style="text-align: left;"><div style="font-size: 11px; color: gray; text-transform: uppercase;">{p_lbl}</div><div style="font-size: 22px; font-weight: bold; color: #a0a0a0;">{cpi_previous:.1f}%</div></div><div style="text-align: center;"><div style="font-size: 11px; color: gray; text-transform: uppercase;">{f_lbl}</div><div style="font-size: 22px; font-weight: bold; color: white;">{cpi_forecast:.1f}%</div></div><div style="text-align: right;"><div style="font-size: 11px; color: gray; text-transform: uppercase;">{r_lbl}</div><div style="font-size: 22px; font-weight: bold; color: {dev_color};">{lower_bound:.2f}% - {upper_bound:.2f}%</div></div></div><div style="background: rgba(0,0,0,0.3); padding: 10px; border-radius: 5px;"><div style="font-size: 14px; color: {dev_color}; font-weight: bold; text-align: center; margin-bottom: 5px;">{dev_signal}</div><div style="font-size: 12px; color: #d0d0d0; text-align: center; line-height: 1.4;">{dev_desc}</div></div></div>''', unsafe_allow_html=True)
 
     # ----------------- 2. NFP CALCULATOR (ORANGE 🟠) -----------------
     elif major_news.startswith("🟠 NFP"):
@@ -456,7 +494,7 @@ with tab1:
                 dev_color = "#ff4b4b"
                 if exp_value < nfp_previous:
                     dev_signal = "📉 Big Miss & Decelerating (Strong Bearish)"
-                    dev_desc = "Significant downside surprise projected. Figures fall below both forecasts and previous data, acting as a primary bearish catalyst for the DXY." if lang == "English" else "රැකියා දත්ත ප්‍රබල ලෙස පහත වැටී ඇත. මෙය DXY එක කඩා වැටීමට ප්‍රබල හේතුවකි."
+                    dev_desc = "Significant downside surprise projected. Figures fall below both forecasts and previous data, acting as a primary bearish catalyst for the DXY." if lang == "English" else "රැකියා දත්ත ප්‍රබල ලෙස පහත වැටී ඇත. මෙය DXY එක කඩා වැට মিলিটারি ප්‍රබල හේතුවකි."
                 else:
                     dev_signal = "⚖️ Miss BUT Sticky (Fakeout Warning)"
                     dev_desc = "Data misses forecasts but shows stickiness relative to previous figures. Potential for a 'fakeout' market reversal." if lang == "English" else "දත්ත අඩුවී ඇතත් පෙර මාසයට සාපේක්ෂව ඒ මට්ටමේම පවතී. ක්ෂණික රැවටිලි (Fakeouts) ඇතිවිය හැක."
@@ -472,7 +510,7 @@ with tab1:
             f_lbl = "Forecast" if lang == "English" else "Forecast (අපේක්ෂාව)"
             r_lbl = "AI Expected Range" if lang == "English" else "AI Expected Range (අනුමානය)"
 
-            st.markdown(f'''<div style="background-color: rgba(255, 255, 255, 0.03); border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 10px; padding: 15px;"><div style="font-size: 14px; color: #a0a0a0; margin-bottom: 15px; display: flex; align-items: center; gap: 8px;">🤖 <b>AI Advanced Forecast Radar</b></div><div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;"><div style="text-align: left;"><div style="font-size: 11px; color: gray; text-transform: uppercase;">{p_lbl}</div><div style="font-size: 22px; font-weight: bold; color: #a0a0a0;">{nfp_previous}k</div></div><div style="text-align: center;"><div style="font-size: 11px; color: gray; text-transform: uppercase;">{f_lbl}</div><div style="font-size: 22px; font-weight: bold; color: white;">{nfp_forecast}k</div></div><div style="text-align: right;"><div style="font-size: 11px; color: gray; text-transform: uppercase;">{r_lbl}</div><div style="font-size: 22px; font-weight: bold; color: {dev_color};">{lower_bound:.0f}k - {upper_bound:.0f}k</div></div></div><div style="background: rgba(0,0,0,0.3); padding: 10px; border-radius: 5px;"><div style="font-size: 14px; color: {dev_color}; font-weight: bold; text-align: center; margin-bottom: 5px;">{dev_signal}</div><div style="font-size: 12px; color: #d0d0d0; text-align: center; line-height: 1.4;">{dev_desc}</div></div></div>''', unsafe_allow_html=True)
+            st.markdown(f'''<div style="background-color: rgba(255, 255, 255, 0.03); border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 10px; padding: 15px;"><div style="font-size: 14px; color: #a0a0a0; margin-bottom: 15px; display: flex; flex-wrap: wrap; align-items: center; gap: 8px;">🤖 <b>AI Advanced Forecast Radar</b></div><div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;"><div style="text-align: left;"><div style="font-size: 11px; color: gray; text-transform: uppercase;">{p_lbl}</div><div style="font-size: 22px; font-weight: bold; color: #a0a0a0;">{nfp_previous}k</div></div><div style="text-align: center;"><div style="font-size: 11px; color: gray; text-transform: uppercase;">{f_lbl}</div><div style="font-size: 22px; font-weight: bold; color: white;">{nfp_forecast}k</div></div><div style="text-align: right;"><div style="font-size: 11px; color: gray; text-transform: uppercase;">{r_lbl}</div><div style="font-size: 22px; font-weight: bold; color: {dev_color};">{lower_bound:.0f}k - {upper_bound:.0f}k</div></div></div><div style="background: rgba(0,0,0,0.3); padding: 10px; border-radius: 5px;"><div style="font-size: 14px; color: {dev_color}; font-weight: bold; text-align: center; margin-bottom: 5px;">{dev_signal}</div><div style="font-size: 12px; color: #d0d0d0; text-align: center; line-height: 1.4;">{dev_desc}</div></div></div>''', unsafe_allow_html=True)
 
     # ----------------- 3. CORE PCE CALCULATOR (PURPLE 🟣) -----------------
     elif major_news.startswith("🟣 Core"):
@@ -565,7 +603,7 @@ with tab1:
             f_lbl = "Forecast" if lang == "English" else "Forecast (අපේක්ෂාව)"
             r_lbl = "AI Expected Range" if lang == "English" else "AI Expected Range (අනුමානය)"
 
-            st.markdown(f'''<div style="background-color: rgba(255, 255, 255, 0.03); border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 10px; padding: 15px;"><div style="font-size: 14px; color: #a0a0a0; margin-bottom: 15px; display: flex; align-items: center; gap: 8px;">🤖 <b>AI Advanced Forecast Radar</b></div><div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;"><div style="text-align: left;"><div style="font-size: 11px; color: gray; text-transform: uppercase;">{p_lbl}</div><div style="font-size: 22px; font-weight: bold; color: #a0a0a0;">{pce_previous:.1f}%</div></div><div style="text-align: center;"><div style="font-size: 11px; color: gray; text-transform: uppercase;">{f_lbl}</div><div style="font-size: 22px; font-weight: bold; color: white;">{pce_forecast:.1f}%</div></div><div style="text-align: right;"><div style="font-size: 11px; color: gray; text-transform: uppercase;">{r_lbl}</div><div style="font-size: 22px; font-weight: bold; color: {dev_color};">{lower_bound:.2f}% - {upper_bound:.2f}%</div></div></div><div style="background: rgba(0,0,0,0.3); padding: 10px; border-radius: 5px;"><div style="font-size: 14px; color: {dev_color}; font-weight: bold; text-align: center; margin-bottom: 5px;">{dev_signal}</div><div style="font-size: 12px; color: #d0d0d0; text-align: center; line-height: 1.4;">{dev_desc}</div></div></div>''', unsafe_allow_html=True)
+            st.markdown(f'''<div style="background-color: rgba(255, 255, 255, 0.03); border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 10px; padding: 15px;"><div style="font-size: 14px; color: #a0a0a0; margin-bottom: 15px; display: flex; flex-wrap: wrap; align-items: center; gap: 8px;">🤖 <b>AI Advanced Forecast Radar</b></div><div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;"><div style="text-align: left;"><div style="font-size: 11px; color: gray; text-transform: uppercase;">{p_lbl}</div><div style="font-size: 22px; font-weight: bold; color: #a0a0a0;">{pce_previous:.1f}%</div></div><div style="text-align: center;"><div style="font-size: 11px; color: gray; text-transform: uppercase;">{f_lbl}</div><div style="font-size: 22px; font-weight: bold; color: white;">{pce_forecast:.1f}%</div></div><div style="text-align: right;"><div style="font-size: 11px; color: gray; text-transform: uppercase;">{r_lbl}</div><div style="font-size: 22px; font-weight: bold; color: {dev_color};">{lower_bound:.2f}% - {upper_bound:.2f}%</div></div></div><div style="background: rgba(0,0,0,0.3); padding: 10px; border-radius: 5px;"><div style="font-size: 14px; color: {dev_color}; font-weight: bold; text-align: center; margin-bottom: 5px;">{dev_signal}</div><div style="font-size: 12px; color: #d0d0d0; text-align: center; line-height: 1.4;">{dev_desc}</div></div></div>''', unsafe_allow_html=True)
 
     # ----------------- 4. ADVANCE GDP CALCULATOR (BLUE 🔵) -----------------
     elif major_news.startswith("🔵 Advance"):
@@ -664,7 +702,7 @@ with tab1:
             f_lbl = "Forecast" if lang == "English" else "Forecast (අපේක්ෂාව)"
             r_lbl = "AI Expected Range" if lang == "English" else "AI Expected Range (අනුමානය)"
 
-            st.markdown(f'''<div style="background-color: rgba(255, 255, 255, 0.03); border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 10px; padding: 15px;"><div style="font-size: 14px; color: #a0a0a0; margin-bottom: 15px; display: flex; align-items: center; gap: 8px;">🤖 <b>AI Advanced Forecast Radar</b></div><div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;"><div style="text-align: left;"><div style="font-size: 11px; color: gray; text-transform: uppercase;">{p_lbl}</div><div style="font-size: 22px; font-weight: bold; color: #a0a0a0;">{gdp_previous:.1f}%</div></div><div style="text-align: center;"><div style="font-size: 11px; color: gray; text-transform: uppercase;">{f_lbl}</div><div style="font-size: 22px; font-weight: bold; color: white;">{gdp_forecast:.1f}%</div></div><div style="text-align: right;"><div style="font-size: 11px; color: gray; text-transform: uppercase;">{r_lbl}</div><div style="font-size: 22px; font-weight: bold; color: {dev_color};">{lower_bound:.2f}% - {upper_bound:.2f}%</div></div></div><div style="background: rgba(0,0,0,0.3); padding: 10px; border-radius: 5px;"><div style="font-size: 14px; color: {dev_color}; font-weight: bold; text-align: center; margin-bottom: 5px;">{dev_signal}</div><div style="font-size: 12px; color: #d0d0d0; text-align: center; line-height: 1.4;">{dev_desc}</div></div></div>''', unsafe_allow_html=True)
+            st.markdown(f'''<div style="background-color: rgba(255, 255, 255, 0.03); border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 10px; padding: 15px;"><div style="font-size: 14px; color: #a0a0a0; margin-bottom: 15px; display: flex; flex-wrap: wrap; align-items: center; gap: 8px;">🤖 <b>AI Advanced Forecast Radar</b></div><div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;"><div style="text-align: left;"><div style="font-size: 11px; color: gray; text-transform: uppercase;">{p_lbl}</div><div style="font-size: 22px; font-weight: bold; color: #a0a0a0;">{gdp_previous:.1f}%</div></div><div style="text-align: center;"><div style="font-size: 11px; color: gray; text-transform: uppercase;">{f_lbl}</div><div style="font-size: 22px; font-weight: bold; color: white;">{gdp_forecast:.1f}%</div></div><div style="text-align: right;"><div style="font-size: 11px; color: gray; text-transform: uppercase;">{r_lbl}</div><div style="font-size: 22px; font-weight: bold; color: {dev_color};">{lower_bound:.2f}% - {upper_bound:.2f}%</div></div></div><div style="background: rgba(0,0,0,0.3); padding: 10px; border-radius: 5px;"><div style="font-size: 14px; color: {dev_color}; font-weight: bold; text-align: center; margin-bottom: 5px;">{dev_signal}</div><div style="font-size: 12px; color: #d0d0d0; text-align: center; line-height: 1.4;">{dev_desc}</div></div></div>''', unsafe_allow_html=True)
 
     # ----------------- 5. FOMC RATE DECISION CALCULATOR (RED 🔴) -----------------
     elif major_news.startswith("🔴 FOMC"):
@@ -764,7 +802,7 @@ with tab1:
             f_lbl = "Forecast" if lang == "English" else "Forecast (අපේක්ෂාව)"
             r_lbl = "AI Expected Rate" if lang == "English" else "AI Expected Rate (අනුමානය)"
 
-            st.markdown(f'''<div style="background-color: rgba(255, 255, 255, 0.03); border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 10px; padding: 15px;"><div style="font-size: 14px; color: #a0a0a0; margin-bottom: 15px; display: flex; align-items: center; gap: 8px;">🤖 <b>AI Advanced Forecast Radar</b></div><div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;"><div style="text-align: left;"><div style="font-size: 11px; color: gray; text-transform: uppercase;">{p_lbl}</div><div style="font-size: 22px; font-weight: bold; color: #a0a0a0;">{fomc_previous:.2f}%</div></div><div style="text-align: center;"><div style="font-size: 11px; color: gray; text-transform: uppercase;">{f_lbl}</div><div style="font-size: 22px; font-weight: bold; color: white;">{fomc_forecast:.2f}%</div></div><div style="text-align: right;"><div style="font-size: 11px; color: gray; text-transform: uppercase;">{r_lbl}</div><div style="font-size: 22px; font-weight: bold; color: {dev_color};">{lower_bound:.2f}% - {upper_bound:.2f}%</div></div></div><div style="background: rgba(0,0,0,0.3); padding: 10px; border-radius: 5px;"><div style="font-size: 14px; color: {dev_color}; font-weight: bold; text-align: center; margin-bottom: 5px;">{dev_signal}</div><div style="font-size: 12px; color: #d0d0d0; text-align: center; line-height: 1.4;">{dev_desc}</div></div></div>''', unsafe_allow_html=True)
+            st.markdown(f'''<div style="background-color: rgba(255, 255, 255, 0.03); border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 10px; padding: 15px;"><div style="font-size: 14px; color: #a0a0a0; margin-bottom: 15px; display: flex; flex-wrap: wrap; align-items: center; gap: 8px;">🤖 <b>AI Advanced Forecast Radar</b></div><div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;"><div style="text-align: left;"><div style="font-size: 11px; color: gray; text-transform: uppercase;">{p_lbl}</div><div style="font-size: 22px; font-weight: bold; color: #a0a0a0;">{fomc_previous:.2f}%</div></div><div style="text-align: center;"><div style="font-size: 11px; color: gray; text-transform: uppercase;">{f_lbl}</div><div style="font-size: 22px; font-weight: bold; color: white;">{fomc_forecast:.2f}%</div></div><div style="text-align: right;"><div style="font-size: 11px; color: gray; text-transform: uppercase;">{r_lbl}</div><div style="font-size: 22px; font-weight: bold; color: {dev_color};">{lower_bound:.2f}% - {upper_bound:.2f}%</div></div></div><div style="background: rgba(0,0,0,0.3); padding: 10px; border-radius: 5px;"><div style="font-size: 14px; color: {dev_color}; font-weight: bold; text-align: center; margin-bottom: 5px;">{dev_signal}</div><div style="font-size: 12px; color: #d0d0d0; text-align: center; line-height: 1.4;">{dev_desc}</div></div></div>''', unsafe_allow_html=True)
 
 # --- NEW TAB: LIVE ECONOMIC CALENDAR WITH BULL MATRIX GUIDE MAP ---
 with tab2:
@@ -775,19 +813,17 @@ with tab2:
         st.header("📅 සජීවී දින දර්ශනය සහ මැක්‍රෝ වර්ණ සිතියම")
         st.write("පහත දැක්වෙන වර්ණ සිතියම (Color Map) උපකාර කරගෙන සජීවී දින දර්ශනය තුළ ඇති අදාළ පෙරගමන් දත්ත (Leading Indicators) පහසුවෙන් සොයාගන්න.")
     
+    # UI FIX 5: Color Map is now horizontally responsive on Mobile via Flexbox
     st.markdown("#### 🎨 🗺️ Bull Matrix Macro Color Map" if lang == "English" else "#### 🎨 🗺️ Bull Matrix මැක්‍රෝ වර්ණ සිතියම")
 
-    map_c1, map_c2, map_c3, map_c4, map_c5 = st.columns(5)
-    
-    map_c1.markdown('''<div style="border-left: 4px solid #00E5FF; padding-left: 10px; background-color: rgba(0,229,255,0.03); padding-top: 10px; padding-bottom: 10px; padding-right: 5px; border-radius: 4px; height: 100%;"><b style="color: #00E5FF; font-size: 14px;">🟢 CPI</b><div style="font-size: 12px; color: #b0b0b0; margin-top: 5px; line-height: 1.4;">• Core PPI m/m<br>• WTI Crude Oil<br>• NY Fed Expect.<br>• ISM Prices Paid<br>• Import Prices</div></div>''', unsafe_allow_html=True)
-    
-    map_c2.markdown('''<div style="border-left: 4px solid #FF9800; padding-left: 10px; background-color: rgba(255,152,0,0.03); padding-top: 10px; padding-bottom: 10px; padding-right: 5px; border-radius: 4px; height: 100%;"><b style="color: #FF9800; font-size: 14px;">🟠 NFP</b><div style="font-size: 12px; color: #b0b0b0; margin-top: 5px; line-height: 1.4;">• ADP Employment<br>• ISM Services Emp.<br>• JOLTs Job Openings<br>• Initial Jobless Claims<br>• Challenger Job Cuts</div></div>''', unsafe_allow_html=True)
-
-    map_c3.markdown('''<div style="border-left: 4px solid #E040FB; padding-left: 10px; background-color: rgba(224,64,251,0.03); padding-top: 10px; padding-bottom: 10px; padding-right: 5px; border-radius: 4px; height: 100%;"><b style="color: #E040FB; font-size: 14px;">🟣 Core PCE</b><div style="font-size: 12px; color: #b0b0b0; margin-top: 5px; line-height: 1.4;">• Core CPI m/m<br>• Core PPI m/m<br>• Avg Hourly Earnings<br>• Retail Sales m/m</div></div>''', unsafe_allow_html=True)
-
-    map_c4.markdown('''<div style="border-left: 4px solid #2979FF; padding-left: 10px; background-color: rgba(41,121,255,0.03); padding-top: 10px; padding-bottom: 10px; padding-right: 5px; border-radius: 4px; height: 100%;"><b style="color: #2979FF; font-size: 14px;">🔵 Advance GDP</b><div style="font-size: 12px; color: #b0b0b0; margin-top: 5px; line-height: 1.4;">• Atlanta Fed GDPNow<br>• Retail Sales (Q. Avg)<br>• Trade Balance<br>• ISM Composite PMI<br>• Durable Goods Orders</div></div>''', unsafe_allow_html=True)
-
-    map_c5.markdown('''<div style="border-left: 4px solid #FF5252; padding-left: 10px; background-color: rgba(255,82,82,0.03); padding-top: 10px; padding-bottom: 10px; padding-right: 5px; border-radius: 4px; height: 100%;"><b style="color: #FF5252; font-size: 14px;">🔴 FOMC Decision</b><div style="font-size: 12px; color: #b0b0b0; margin-top: 5px; line-height: 1.4;">• CME FedWatch<br>• Core PCE/CPI Trend<br>• Labor Market Data<br>• Recent Fedspeak<br>• Financial Conditions</div></div>''', unsafe_allow_html=True)
+    cmap_html = f"""<div style="display: flex; flex-wrap: wrap; gap: 10px;">
+    <div style="flex: 1 1 18%; min-width: 150px; border-left: 4px solid #00E5FF; padding-left: 10px; background-color: rgba(0,229,255,0.03); padding-top: 10px; padding-bottom: 10px; border-radius: 4px;"><b style="color: #00E5FF; font-size: 14px;">🟢 CPI</b><div style="font-size: 12px; color: #b0b0b0; margin-top: 5px; line-height: 1.4;">• Core PPI m/m<br>• WTI Crude Oil<br>• NY Fed Expect.<br>• ISM Prices Paid<br>• Import Prices</div></div>
+    <div style="flex: 1 1 18%; min-width: 150px; border-left: 4px solid #FF9800; padding-left: 10px; background-color: rgba(255,152,0,0.03); padding-top: 10px; padding-bottom: 10px; border-radius: 4px;"><b style="color: #FF9800; font-size: 14px;">🟠 NFP</b><div style="font-size: 12px; color: #b0b0b0; margin-top: 5px; line-height: 1.4;">• ADP Employment<br>• ISM Services Emp.<br>• JOLTs Job Openings<br>• Initial Jobless Claims<br>• Challenger Job Cuts</div></div>
+    <div style="flex: 1 1 18%; min-width: 150px; border-left: 4px solid #E040FB; padding-left: 10px; background-color: rgba(224,64,251,0.03); padding-top: 10px; padding-bottom: 10px; border-radius: 4px;"><b style="color: #E040FB; font-size: 14px;">🟣 Core PCE</b><div style="font-size: 12px; color: #b0b0b0; margin-top: 5px; line-height: 1.4;">• Core CPI m/m<br>• Core PPI m/m<br>• Avg Hourly Earnings<br>• Retail Sales m/m</div></div>
+    <div style="flex: 1 1 18%; min-width: 150px; border-left: 4px solid #2979FF; padding-left: 10px; background-color: rgba(41,121,255,0.03); padding-top: 10px; padding-bottom: 10px; border-radius: 4px;"><b style="color: #2979FF; font-size: 14px;">🔵 Advance GDP</b><div style="font-size: 12px; color: #b0b0b0; margin-top: 5px; line-height: 1.4;">• Atlanta Fed GDPNow<br>• Retail Sales (Q. Avg)<br>• Trade Balance<br>• ISM Composite PMI<br>• Durable Goods Orders</div></div>
+    <div style="flex: 1 1 18%; min-width: 150px; border-left: 4px solid #FF5252; padding-left: 10px; background-color: rgba(255,82,82,0.03); padding-top: 10px; padding-bottom: 10px; border-radius: 4px;"><b style="color: #FF5252; font-size: 14px;">🔴 FOMC Decision</b><div style="font-size: 12px; color: #b0b0b0; margin-top: 5px; line-height: 1.4;">• CME FedWatch<br>• Core PCE/CPI Trend<br>• Labor Market Data<br>• Recent Fedspeak<br>• Financial Conditions</div></div>
+    </div>"""
+    st.markdown(cmap_html, unsafe_allow_html=True)
     
     st.markdown("<br>", unsafe_allow_html=True)
     
@@ -809,7 +845,7 @@ with tab2:
     </div>
     """, height=800, scrolling=True)
 
-    # --- NEW: Reference Guide Below Calendar ---
+    # --- Reference Guide Below Calendar ---
     st.markdown("---")
     if lang == "English":
         st.subheader("📖 Macro Leading Indicators Data Guide")
@@ -864,7 +900,9 @@ with tab3:
     else:
         st.markdown("---")
         h1, h2, h3, h4, h5 = st.columns([2, 3, 2, 3, 1.2]) 
-        h1.markdown("**Date & Time**" if lang == "English" else "**දිනය සහ වේලාව**")
+        # UI FIX 3: Added a hidden marker to let CSS know this row needs Horizontal Scrolling on Mobile
+        marker = '<span class="journal-row-marker" style="display:none;"></span>'
+        h1.markdown(f"{marker}**Date & Time**" if lang == "English" else f"{marker}**දිනය සහ වේලාව**", unsafe_allow_html=True)
         h2.markdown("**News Event**" if lang == "English" else "**නිවුස් එක**")
         h3.markdown("**DXY Score**" if lang == "English" else "**DXY ලකුණ**")
         h4.markdown("**Prediction**" if lang == "English" else "**පුරෝකථනය**")
@@ -904,9 +942,12 @@ with tab3:
                 
         # --- UI Balanced Action Buttons (Download & Clear) ---
         st.markdown("<br>", unsafe_allow_html=True)
-        dl_col, space1, space2, space3, clr_col = st.columns([2, 3, 2, 3, 1.2])
+        # UI FIX 4: Used just 2 columns and a hidden marker to force horizontal layout on mobile
+        dl_col, clr_col = st.columns(2)
+        marker_btn = '<span class="action-btn-marker" style="display:none;"></span>'
         
         with dl_col:
+            st.markdown(marker_btn, unsafe_allow_html=True)
             df = pd.DataFrame(st.session_state['journal'])
             df_export = df.drop(columns=['Inputs']) 
             csv = df_export.to_csv(index=False).encode('utf-8')
