@@ -105,7 +105,6 @@ def create_gauge_chart(score):
     fig.update_layout(paper_bgcolor="#0e1117", font={'color': "white"}, height=300, margin=dict(l=20, r=20, t=50, b=20))
     return fig
 
-# Helper function to save predictions WITH EXACT INPUTS
 def save_to_journal(event_name, score, direction_text, inputs_dict):
     entry = {
         "Date & Time": datetime.datetime.now().strftime("%Y-%m-%d %H:%M"),
@@ -117,7 +116,6 @@ def save_to_journal(event_name, score, direction_text, inputs_dict):
     st.session_state['journal'].append(entry)
     st.toast(f"✅ Saved to Journal!")
 
-# Helper to safely set Selectbox Index when Loading
 def get_idx(event_name, input_key, options_list):
     if st.session_state['loaded_data'] and st.session_state['loaded_data']['News Event'] == event_name:
         val = st.session_state['loaded_data']['Inputs'].get(input_key)
@@ -125,13 +123,11 @@ def get_idx(event_name, input_key, options_list):
             return options_list.index(val)
     return 0
 
-# Helper to safely set Number Input when Loading
 def get_num_val(event_name, input_key, default_val):
     if st.session_state['loaded_data'] and st.session_state['loaded_data']['News Event'] == event_name:
         return st.session_state['loaded_data']['Inputs'].get(input_key, default_val)
     return default_val
 
-# --- Custom SVG Icons Definition ---
 svg_bullish = '''<svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><circle cx="12" cy="12" r="12" fill="#4CAF50"/><path d="M7 15 L10.5 11.5 L13 14 L17 9 M13 9 H17 V13" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>'''
 svg_bearish = '''<svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><circle cx="12" cy="12" r="12" fill="#F44336"/><path d="M7 9 L10.5 12.5 L13 10 L17 15 M13 15 H17 V11" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>'''
 svg_ranging = '''<svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><circle cx="12" cy="12" r="12" fill="#FFC107"/><path d="M8 10 L6 12 L8 14 M16 10 L18 12 L16 14 M6 12 H18" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>'''
@@ -173,7 +169,6 @@ with tab1:
         with open(logo_path, "r") as f:
             svg_data = f.read()
         b64_svg = base64.b64encode(svg_data.encode("utf-8")).decode("utf-8")
-        # Inverting colors via CSS to make the black SVG white/bright on the dark sidebar
         logo_html = f'''
         <div style="text-align: center; margin-bottom: -10px;">
             <img src="data:image/svg+xml;base64,{b64_svg}" width="65%" style="filter: invert(1) brightness(2);">
@@ -256,16 +251,25 @@ with tab1:
             st.subheader("📥 Input Sub-Report Data")
             col_prev, col_fc = st.columns(2)
             with col_prev:
-                cpi_previous = st.number_input("📉 Previous Value (%):", value=get_num_val(major_news, "cpi_prev", 3.1), step=0.1, format="%.1f")
+                cpi_previous = st.number_input("📉 Previous Value (%):", 
+                                               value=get_num_val(major_news, "cpi_prev", 0.3), step=0.1, format="%.1f",
+                                               help="Forex Factory හි 'Core CPI m/m' (මාසික අගය) භාවිතා කරන්න. Previous යනු පසුගිය මාසයේ නිකුත් වූ සැබෑ අගයයි.")
             with col_fc:
-                cpi_forecast = st.number_input("📊 Market Forecast (%):", value=get_num_val(major_news, "cpi_fc", 2.9), step=0.1, format="%.1f")
+                cpi_forecast = st.number_input("📊 Market Forecast (%):", 
+                                               value=get_num_val(major_news, "cpi_fc", 0.2), step=0.1, format="%.1f",
+                                               help="Forex Factory හි 'Core CPI m/m' සඳහා වෙළඳපොළ බලාපොරොත්තු වන Forecast අගය මෙහි යොදන්න.")
             st.markdown("<br>", unsafe_allow_html=True)
             
-            ppi_input = st.selectbox("1. PPI Trend:", opt_ppi, index=get_idx(major_news, "ppi", opt_ppi))
-            gasoline = st.selectbox("2. Gasoline / Energy Prices:", opt_gas, index=get_idx(major_news, "gas", opt_gas))
-            ny_fed = st.selectbox("3. NY Fed 1-Yr Inflation Expectations:", opt_nyfed, index=get_idx(major_news, "nyfed", opt_nyfed))
-            pmi_prices = st.selectbox("4. ISM Services/Mfg Prices Paid:", opt_pmi, index=get_idx(major_news, "pmi", opt_pmi))
-            import_prices = st.selectbox("5. Import Prices:", opt_imp, index=get_idx(major_news, "imp", opt_imp))
+            ppi_input = st.selectbox("1. PPI Trend:", opt_ppi, index=get_idx(major_news, "ppi", opt_ppi),
+                                     help="Forex Factory හි CPI නිවුස් එකට පෙර නිකුත් වූ 'Core PPI m/m' හෝ 'PPI m/m' දත්තය දෙස බලන්න.")
+            gasoline = st.selectbox("2. Gasoline / Energy Prices:", opt_gas, index=get_idx(major_news, "gas", opt_gas),
+                                    help="TradingView හි Crude Oil (WTI) හෝ Gasoline චාට් එක පසුගිය මාසය පුරා ඉහළ ගියේද යන්න බලන්න.")
+            ny_fed = st.selectbox("3. NY Fed 1-Yr Inflation Expectations:", opt_nyfed, index=get_idx(major_news, "nyfed", opt_nyfed),
+                                  help="මස මුලදී නිකුත් වූ 'NY Fed 1-Year Inflation' වාර්තාවේ උද්ධමන බලාපොරොත්තුව වැඩිවී ඇත්දැයි බලන්න.")
+            pmi_prices = st.selectbox("4. ISM Services/Mfg Prices Paid:", opt_pmi, index=get_idx(major_news, "pmi", opt_pmi),
+                                      help="මස මුලදී ආපු ISM Services හෝ Manufacturing නිවුස් එක ඇතුළේ තියෙන 'Prices Paid' අනු-දර්ශකය බලන්න.")
+            import_prices = st.selectbox("5. Import Prices:", opt_imp, index=get_idx(major_news, "imp", opt_imp),
+                                         help="Forex Factory හි 'Import Price Index m/m' නිවුස් අගය ඉහළ ගොස් තිබේදැයි බලන්න.")
             
         with col_mid: st.markdown('<div class="vertical-divider"></div>', unsafe_allow_html=True)
             
@@ -364,16 +368,25 @@ with tab1:
             st.subheader("📥 Input Sub-Report Data")
             col_prev, col_fc = st.columns(2)
             with col_prev:
-                nfp_previous = st.number_input("📉 Previous Value (k):", value=int(get_num_val(major_news, "nfp_prev", 200)), step=10, format="%d")
+                nfp_previous = st.number_input("📉 Previous Value (k):", 
+                                               value=int(get_num_val(major_news, "nfp_prev", 200)), step=10, format="%d",
+                                               help="Forex Factory හි 'Non-Farm Employment Change' අගය භාවිතා කරන්න. (උදා: 200K නම් 200 ලෙස පමණක් යොදන්න).")
             with col_fc:
-                nfp_forecast = st.number_input("📊 Market Forecast (k):", value=int(get_num_val(major_news, "nfp_fc", 180)), step=10, format="%d")
+                nfp_forecast = st.number_input("📊 Market Forecast (k):", 
+                                               value=int(get_num_val(major_news, "nfp_fc", 180)), step=10, format="%d",
+                                               help="Forex Factory හි 'Non-Farm Employment Change' සඳහා වෙළඳපොළ බලාපොරොත්තු වන Forecast අගය මෙහි යොදන්න.")
             st.markdown("<br>", unsafe_allow_html=True)
 
-            adp_input = st.selectbox("1. ADP Employment Change:", opt_adp, index=get_idx(major_news, "adp", opt_adp))
-            ism_services = st.selectbox("2. ISM Services Employment:", opt_ism, index=get_idx(major_news, "ism", opt_ism))
-            jolts = st.selectbox("3. JOLTs Job Openings:", opt_jolts, index=get_idx(major_news, "jolts", opt_jolts))
-            jobless = st.selectbox("4. Initial Jobless Claims:", opt_jobless, index=get_idx(major_news, "jobless", opt_jobless))
-            challenger = st.selectbox("5. Challenger Job Cuts:", opt_chal, index=get_idx(major_news, "chal", opt_chal))
+            adp_input = st.selectbox("1. ADP Employment Change:", opt_adp, index=get_idx(major_news, "adp", opt_adp),
+                                     help="NFP සතියේ බදාදා නිකුත් වන 'ADP Non-Farm Employment Change' දත්තය බලන්න.")
+            ism_services = st.selectbox("2. ISM Services Employment:", opt_ism, index=get_idx(major_news, "ism", opt_ism),
+                                        help="මස මුලදී නිකුත් වන ISM Services PMI නිවුස් එක ඇතුළේ තියෙන 'Employment' අනු-දර්ශකය බලන්න.")
+            jolts = st.selectbox("3. JOLTs Job Openings:", opt_jolts, index=get_idx(major_news, "jolts", opt_jolts),
+                                 help="මෑතකදී නිකුත් වූ 'JOLTs Job Openings' වාර්තාවේ රැකියා පුරප්පාඩු වැඩි වී ඇත්දැයි බලන්න.")
+            jobless = st.selectbox("4. Initial Jobless Claims:", opt_jobless, index=get_idx(major_news, "jobless", opt_jobless),
+                                   help="පසුගිය මාසයේ සතිපතා නිකුත් වූ 'Unemployment Claims' වල සාමාන්‍යය 200k-250k අතර කෙසේ තිබුණේදැයි බලන්න.")
+            challenger = st.selectbox("5. Challenger Job Cuts:", opt_chal, index=get_idx(major_news, "chal", opt_chal),
+                                      help="NFP සතියේ බ්‍රහස්පතින්දා නිකුත් වන 'Challenger Job Cuts' වාර්තාව දෙස බලන්න.")
             
         with col_mid: st.markdown('<div class="vertical-divider"></div>', unsafe_allow_html=True)
             
@@ -471,15 +484,23 @@ with tab1:
             st.subheader("📥 Input Sub-Report Data")
             col_prev, col_fc = st.columns(2)
             with col_prev:
-                pce_previous = st.number_input("📉 Previous Value (%):", value=get_num_val(major_news, "pce_prev", 0.3), step=0.1, format="%.1f")
+                pce_previous = st.number_input("📉 Previous Value (%):", 
+                                               value=get_num_val(major_news, "pce_prev", 0.3), step=0.1, format="%.1f",
+                                               help="Forex Factory හි 'Core PCE Price Index m/m' (මාසික අගය) භාවිතා කරන්න. Previous යනු පසුගිය මාසයේ සැබෑ අගයයි.")
             with col_fc:
-                pce_forecast = st.number_input("📊 Market Forecast (%):", value=get_num_val(major_news, "pce_fc", 0.2), step=0.1, format="%.1f")
+                pce_forecast = st.number_input("📊 Market Forecast (%):", 
+                                               value=get_num_val(major_news, "pce_fc", 0.2), step=0.1, format="%.1f",
+                                               help="Forex Factory හි 'Core PCE m/m' සඳහා වෙළඳපොළ බලාපොරොත්තු වන Forecast අගය මෙහි යොදන්න.")
             st.markdown("<br>", unsafe_allow_html=True)
 
-            cpi_input = st.selectbox("1. Recent Core CPI Release:", opt_cpi, index=get_idx(major_news, "cpi", opt_cpi))
-            ppi_input = st.selectbox("2. Recent Core PPI Release:", opt_ppi, index=get_idx(major_news, "ppi", opt_ppi))
-            hourly_earnings = st.selectbox("3. Average Hourly Earnings:", opt_hr, index=get_idx(major_news, "hr", opt_hr))
-            retail_sales = st.selectbox("4. Retail Sales / Personal Income:", opt_ret, index=get_idx(major_news, "ret", opt_ret))
+            cpi_input = st.selectbox("1. Recent Core CPI Release:", opt_cpi, index=get_idx(major_news, "cpi", opt_cpi),
+                                     help="PCE නිවුස් එකට පෙර නිකුත් වූ එම මාසයටම අදාළ 'Core CPI m/m' දත්තය දෙස බලන්න.")
+            ppi_input = st.selectbox("2. Recent Core PPI Release:", opt_ppi, index=get_idx(major_news, "ppi", opt_ppi),
+                                     help="PCE නිවුස් එකට පෙර නිකුත් වූ එම මාසයටම අදාළ 'Core PPI m/m' දත්තය දෙස බලන්න.")
+            hourly_earnings = st.selectbox("3. Average Hourly Earnings:", opt_hr, index=get_idx(major_news, "hr", opt_hr),
+                                           help="NFP දින නිකුත් වූ 'Average Hourly Earnings m/m' හි පඩි වැඩිවීමේ වේගය බලන්න.")
+            retail_sales = st.selectbox("4. Retail Sales / Personal Income:", opt_ret, index=get_idx(major_news, "ret", opt_ret),
+                                        help="Forex Factory හි 'Retail Sales m/m' හෝ 'Personal Income m/m' දත්තයන් ඉහළ ගොස් ඇත්දැයි බලන්න.")
             
         with col_mid: st.markdown('<div class="vertical-divider"></div>', unsafe_allow_html=True)
             
@@ -576,16 +597,25 @@ with tab1:
             st.subheader("📥 Input Sub-Report Data")
             col_prev, col_fc = st.columns(2)
             with col_prev:
-                gdp_previous = st.number_input("📉 Previous Value (%):", value=get_num_val(major_news, "gdp_prev", 2.1), step=0.1, format="%.1f")
+                gdp_previous = st.number_input("📉 Previous Value (%):", 
+                                               value=get_num_val(major_news, "gdp_prev", 2.1), step=0.1, format="%.1f",
+                                               help="Forex Factory හි 'Advance GDP q/q' (කාර්තුමය අගය) භාවිතා කරන්න. Previous යනු පසුගිය කාර්තුවේ අවසන් අගයයි.")
             with col_fc:
-                gdp_forecast = st.number_input("📊 Market Forecast (%):", value=get_num_val(major_news, "gdp_fc", 1.8), step=0.1, format="%.1f")
+                gdp_forecast = st.number_input("📊 Market Forecast (%):", 
+                                               value=get_num_val(major_news, "gdp_fc", 1.8), step=0.1, format="%.1f",
+                                               help="Forex Factory හි 'Advance GDP q/q' සඳහා වෙළඳපොළ බලාපොරොත්තු වන Forecast අගය මෙහි යොදන්න.")
             st.markdown("<br>", unsafe_allow_html=True)
 
-            atlanta_fed = st.selectbox("1. Atlanta Fed GDPNow Tracker:", opt_atl, index=get_idx(major_news, "atl", opt_atl))
-            retail_input = st.selectbox("2. Retail Sales (Quarterly Average):", opt_ret, index=get_idx(major_news, "ret", opt_ret))
-            trade_balance = st.selectbox("3. Trade Balance (Net Exports):", opt_trade, index=get_idx(major_news, "trade", opt_trade))
-            pmi_input = st.selectbox("4. ISM Composite PMI:", opt_pmi, index=get_idx(major_news, "pmi", opt_pmi))
-            durable_goods = st.selectbox("5. Durable Goods Orders:", opt_dur, index=get_idx(major_news, "dur", opt_dur))
+            atlanta_fed = st.selectbox("1. Atlanta Fed GDPNow Tracker:", opt_atl, index=get_idx(major_news, "atl", opt_atl),
+                                       help="Atlanta Fed නිල වෙබ් අඩවියේ ඇති 'GDPNow' Live Tracker අගය බලන්න.")
+            retail_input = st.selectbox("2. Retail Sales (Quarterly Average):", opt_ret, index=get_idx(major_news, "ret", opt_ret),
+                                        help="පසුගිය මාස 3 තුළ නිකුත් වූ 'Retail Sales m/m' වල සාමාන්‍ය හැසිරීම බලන්න.")
+            trade_balance = st.selectbox("3. Trade Balance (Net Exports):", opt_trade, index=get_idx(major_news, "trade", opt_trade),
+                                         help="'Trade Balance' නිවුස් හරහා අපනයන සහ ආනයන පරතරය අඩු වී ඇත්දැයි බලන්න.")
+            pmi_input = st.selectbox("4. ISM Composite PMI:", opt_pmi, index=get_idx(major_news, "pmi", opt_pmi),
+                                     help="පසුගිය මාස 3 තුළ ISM Manufacturing සහ Services PMI වල සාමාන්‍ය තත්ත්වය බලන්න.")
+            durable_goods = st.selectbox("5. Durable Goods Orders:", opt_dur, index=get_idx(major_news, "dur", opt_dur),
+                                         help="මෑතකදී නිකුත් වූ 'Core Durable Goods Orders m/m' දත්තය දෙස බලන්න.")
             
         with col_mid: st.markdown('<div class="vertical-divider"></div>', unsafe_allow_html=True)
             
@@ -684,16 +714,25 @@ with tab1:
             st.subheader("📥 Input Sub-Report Data")
             col_prev, col_fc = st.columns(2)
             with col_prev:
-                fomc_previous = st.number_input("📉 Previous Rate (%):", value=get_num_val(major_news, "fomc_prev", 5.50), step=0.25, format="%.2f")
+                fomc_previous = st.number_input("📉 Previous Rate (%):", 
+                                                value=get_num_val(major_news, "fomc_prev", 5.50), step=0.25, format="%.2f",
+                                                help="Forex Factory හි 'Federal Funds Rate' අගය භාවිතා කරන්න. Previous යනු දැනට පවතින පොලී අනුපාතයයි.")
             with col_fc:
-                fomc_forecast = st.number_input("📊 Market Forecast (%):", value=get_num_val(major_news, "fomc_fc", 5.25), step=0.25, format="%.2f")
+                fomc_forecast = st.number_input("📊 Market Forecast (%):", 
+                                                value=get_num_val(major_news, "fomc_fc", 5.25), step=0.25, format="%.2f",
+                                                help="Forex Factory හි 'Federal Funds Rate' සඳහා වෙළඳපොළ බලාපොරොත්තු වන Forecast අගය මෙහි යොදන්න.")
             st.markdown("<br>", unsafe_allow_html=True)
 
-            fedwatch = st.selectbox("1. CME FedWatch Probability:", opt_fed, index=get_idx(major_news, "fed", opt_fed))
-            inflation = st.selectbox("2. Recent Core PCE/CPI Trend:", opt_inf, index=get_idx(major_news, "inf", opt_inf))
-            labor = st.selectbox("3. Recent Labor Market (NFP/JOLTs):", opt_lab, index=get_idx(major_news, "lab", opt_lab))
-            fedspeak = st.selectbox("4. Recent Fedspeak / Dot Plot:", opt_speak, index=get_idx(major_news, "speak", opt_speak))
-            fin_conditions = st.selectbox("5. Financial Conditions Index:", opt_fin, index=get_idx(major_news, "fin", opt_fin))
+            fedwatch = st.selectbox("1. CME FedWatch Probability:", opt_fed, index=get_idx(major_news, "fed", opt_fed),
+                                    help="CME Group වෙබ් අඩවියේ 'FedWatch Tool' හරහා ආයෝජකයින් බලාපොරොත්තු වන ප්‍රතිශතය බලන්න.")
+            inflation = st.selectbox("2. Recent Core PCE/CPI Trend:", opt_inf, index=get_idx(major_news, "inf", opt_inf),
+                                     help="පසුගිය මාස 2-3 තුළ ඇමෙරිකානු Core CPI සහ Core PCE උද්ධමනය ගමන් කළ දිශාව බලන්න.")
+            labor = st.selectbox("3. Recent Labor Market (NFP/JOLTs):", opt_lab, index=get_idx(major_news, "lab", opt_lab),
+                                 help="මෑතකදී නිකුත් වූ NFP සහ Jobless Claims දත්ත වල ශක්තිමත්භාවය සලකා බලන්න.")
+            fedspeak = st.selectbox("4. Recent Fedspeak / Dot Plot:", opt_speak, index=get_idx(major_news, "speak", opt_speak),
+                                    help="Fed නිලධාරීන් (Powell, Waller ආදීන්) මෑතකදී කළ කතාබහ Hawkish ද Dovish ද යන්න බලන්න.")
+            fin_conditions = st.selectbox("5. Financial Conditions Index:", opt_fin, index=get_idx(major_news, "fin", opt_fin),
+                                          help="Chicago Fed NFCI වැනි දර්ශක හරහා වෙළඳපොළේ මුදල් සැපයුම කෙසේදැයි බලන්න.")
             
         with col_mid: st.markdown('<div class="vertical-divider"></div>', unsafe_allow_html=True)
             
@@ -851,7 +890,7 @@ with tab3:
     with st.expander("📌 Case Study 2: The Dovish Pivot Expectations (Late 2023 FOMC)"):
         st.write("""
         **Scenario:** Inflation was cooling down rapidly towards 3%.
-        * **Leading Data:** Core PCE showed consecutive drops. Jobless claims started to edge higher. Fedspeak shifted from 'hike more' to 'hold and wait'.
+        * **Leading Data:** Core PCE showed consecutive drops. Jobless claims started to edge higher. Fedspeak shifted from 'hike মোহ' to 'hold and wait'.
         * **Prediction Tool Score:** 35% Bearish (DXY).
         * **Result:** Jerome Powell delivered a dovish press conference, and the Dot Plot showed 3 rate cuts for 2024. DXY dumped aggressively, sending XAU/USD (Gold) and US Indices (NASDAQ/US30) to all-time highs.
         """)
