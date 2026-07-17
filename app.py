@@ -146,7 +146,6 @@ def save_to_journal(event_name, score, direction_text, inputs_dict):
     sl_tz = pytz.timezone('Asia/Colombo')
     current_time = datetime.datetime.now(sl_tz).strftime("%Y-%m-%d %H:%M")
     
-    # Strip the dot emoji for clean journal entry matching
     clean_event = event_name.replace("🟢 ", "").replace("🟠 ", "").replace("🟣 ", "").replace("🔵 ", "").replace("🔴 ", "")
     
     entry = {
@@ -198,7 +197,6 @@ tab1, tab2, tab3, tab4 = st.tabs(tab_names)
 with tab1:
     st.sidebar.header("📅 Select Major News Event" if lang == "English" else "📅 ප්‍රධාන නිවුස් එක තෝරන්න")
     
-    # Added Color Dots directly to Sidebar Menu Items for seamless UX
     events_list = ["🟢 CPI (Consumer Price Index)", "🟠 NFP (Non-Farm Payrolls)", "🟣 Core PCE Price Index", "🔵 Advance GDP", "🔴 FOMC Rate Decision"]
     default_event_idx = 0
     if st.session_state['loaded_data'] and st.session_state['loaded_data']['News Event'] in [e[4:] for e in events_list]:
@@ -272,7 +270,7 @@ with tab1:
             if st.button(btn_txt, key=f"btn_{event_name}"):
                 save_to_journal(event_name, score, direction.replace("🚀", "").replace("📉", "").replace("⚖️", "").strip(), inputs_dict)
 
-    sub_report_txt = "📥 Input Sub-Report Data" if lang == "English" else "📥 אනු-වාර්තා දත්ත ඇතුළත් කරන්න"
+    sub_report_txt = "📥 Input Sub-Report Data" if lang == "English" else "📥 අනු-වාර්තා දත්ත ඇතුළත් කරන්න"
     live_pred_txt = "🔮 Live Market Prediction" if lang == "English" else "🔮 සජීවී වෙළඳපොළ පුරෝකථනය"
     prev_txt = "Previous Value" if lang == "English" else "පෙර අගය (Previous)"
     fc_txt = "Market Forecast" if lang == "English" else "වෙළඳපොළ අපේක්ෂාව (Forecast)"
@@ -398,9 +396,9 @@ with tab1:
             st.subheader(sub_report_txt)
             col_prev, col_fc = st.columns(2)
             with col_prev:
-                nfp_previous = st.number_input(f"🟠 📉 {prev_txt} (k):", value=get_num_val(major_news, "nfp_prev", 200), step=10, format="%d", help=tt_nfp_prev)
+                nfp_previous = st.number_input(f"🟠 📉 {prev_txt} (k):", value=int(get_num_val(major_news, "nfp_prev", 200)), step=10, format="%d", help=tt_nfp_prev)
             with col_fc:
-                nfp_forecast = st.number_input(f"🟠 📊 {fc_txt} (k):", value=get_num_val(major_news, "nfp_fc", 180), step=10, format="%d", help=tt_nfp_fc)
+                nfp_forecast = st.number_input(f"🟠 📊 {fc_txt} (k):", value=int(get_num_val(major_news, "nfp_fc", 180)), step=10, format="%d", help=tt_nfp_fc)
             st.markdown("<br>", unsafe_allow_html=True)
 
             l1 = "🟠 1. ADP Employment Change:" if lang == "English" else "🟠 1. ADP රැකියා දත්තය:"
@@ -557,7 +555,7 @@ with tab1:
             else:
                 dev_color = "#FFC107"
                 dev_signal = "⚖️ In-line with Consensus (Neutral)"
-                dev_desc = "Inflation figures are aligned with market expectations. Anticipate consolidation or range-bound trading behavior." if lang == "English" else "දත්තයන්වෙළඳපොළ බලාපොරොත්තු වූ මට්ටමේම පවතී. Market එක එකම සීමාවක (Range) ගමන් කළ හැක."
+                dev_desc = "Inflation figures are aligned with market expectations. Anticipate consolidation or range-bound trading behavior." if lang == "English" else "දත්තයන් වෙළඳපොළ බලාපොරොත්තු වූ මට්ටමේම පවතී. Market එක එකම සීමාවක (Range) ගමන් කළ හැක."
 
             lower_bound = exp_value - 0.05
             upper_bound = exp_value + 0.05
@@ -854,7 +852,7 @@ with tab3:
             * **Result:** Jerome Powell delivered a dovish press conference, and the Dot Plot showed 3 rate cuts for 2024. DXY dumped aggressively, sending XAU/USD (Gold) and US Indices (NASDAQ/US30) to all-time highs.
             """)
     else:
-        st.header("📚 അතීත සිදුවීම් අධ්‍යයනය")
+        st.header("📚 අතීත සිදුවීම් අධ්‍යයනය")
         st.write("අතීතයේ ආර්ථික දත්ත ඩොලරයට බලපාපු විදිය මෙතනින් අධ්‍යයනය කරන්න.")
         
         with st.expander("📌 1 වන අධ්‍යයනය: පශ්චාත්-කොවිඩ් උද්ධමන කම්පනය (2022 CPI)"):
@@ -915,3 +913,48 @@ with tab4:
       </script>
     </div>
     """, height=800, scrolling=True)
+
+    # --- NEW: Reference Guide Below Calendar ---
+    st.markdown("---")
+    if lang == "English":
+        st.subheader("📖 Macro Leading Indicators Data Guide")
+        st.write("Where to find the specific data points required for the predictions.")
+        
+        with st.expander("📅 1. Data Found Directly in the Economic Calendar"):
+            st.markdown("""
+            * **🟢 CPI:** Core PPI m/m, NY Fed 1-Year Inflation Expectations, ISM Prices Paid, Import Price Index m/m.
+            * **🟠 NFP:** ADP Non-Farm Employment Change, ISM Services Employment, JOLTs Job Openings, Initial Jobless Claims, Challenger Job Cuts.
+            * **🟣 Core PCE:** Core CPI m/m, Core PPI m/m, Average Hourly Earnings m/m, Retail Sales m/m.
+            * **🔵 Advance GDP:** Retail Sales m/m (Quarterly Average), Trade Balance, ISM Composite PMI, Core Durable Goods Orders m/m.
+            * **🔴 FOMC Rate Decision:** Core PCE/CPI Trend, Labor Market Data (NFP/Claims).
+            """)
+            
+        with st.expander("🌍 2. External Data (Not in the Calendar)"):
+            st.markdown("""
+            * **WTI Crude Oil / Gasoline Prices (🟢 CPI):** Check the trend on TradingView charts (`USOIL` or `CL1!`).
+            * **Atlanta Fed GDPNow Tracker (🔵 Advance GDP):** Search for "Atlanta Fed GDPNow" on Google to see the official live tracker.
+            * **CME FedWatch Probability (🔴 FOMC):** Check the official CME Group "FedWatch Tool" for investor rate expectations.
+            * **Recent Fedspeak Rhetoric (🔴 FOMC):** Read news summaries on Forex Factory News Feed, Bloomberg, or Financial Twitter (X).
+            * **Financial Conditions Index (🔴 FOMC):** Check the Chicago Fed official website or TradingView chart for `NFCI`.
+            """)
+    else:
+        st.subheader("📖 මැක්‍රෝ පෙරගමන් දත්ත මාර්ගෝපදේශය")
+        st.write("පුරෝකථනය සඳහා අවශ්‍ය දත්ත ලබාගත යුතු නිවැරදිම මූලාශ්‍ර.")
+        
+        with st.expander("📅 1. ආර්ථික දින දර්ශනයෙන් (Calendar) සෘජුවම ගතහැකි දත්ත"):
+            st.markdown("""
+            * **🟢 CPI:** Core PPI m/m, NY Fed 1-Year Inflation Expectations, ISM Prices Paid, Import Price Index m/m.
+            * **🟠 NFP:** ADP Non-Farm Employment Change, ISM Services Employment, JOLTs Job Openings, Initial Jobless Claims, Challenger Job Cuts.
+            * **🟣 Core PCE:** Core CPI m/m, Core PPI m/m, Average Hourly Earnings m/m, Retail Sales m/m.
+            * **🔵 Advance GDP:** Retail Sales m/m (Quarterly Average), Trade Balance, ISM Composite PMI, Core Durable Goods Orders m/m.
+            * **🔴 FOMC Rate Decision:** Core PCE/CPI Trend, Labor Market Data (NFP/Claims).
+            """)
+            
+        with st.expander("🌍 2. දින දර්ශනයේ නොමැති බාහිර දත්ත (External Sources)"):
+            st.markdown("""
+            * **WTI Crude Oil / Gasoline Prices (🟢 CPI):** TradingView චාට් එකෙන් (`USOIL` / `CL1!`) තෙල් මිලේ ප්‍රවණතාවය බැලීම.
+            * **Atlanta Fed GDPNow Tracker (🔵 Advance GDP):** Google හි "Atlanta Fed GDPNow" සර්ච් කර නිල වෙබ් අඩවියෙන් ලයිව් ප්‍රතිශතය බැලීම.
+            * **CME FedWatch Probability (🔴 FOMC):** CME Group වෙබ් අඩවියේ ඇති "FedWatch Tool" හරහා ආයෝජකයන්ගේ අපේක්ෂාව බැලීම.
+            * **Recent Fedspeak Rhetoric (🔴 FOMC):** Forex Factory News Feed, Bloomberg, හෝ Financial Twitter (X) හරහා Fed නිලධාරීන්ගේ කතාවල සාරාංශය කියවීම.
+            * **Financial Conditions Index (🔴 FOMC):** Chicago Fed නිල වෙබ් අඩවිය හෝ TradingView හි `NFCI` චාට් එක.
+            """)
