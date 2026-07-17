@@ -34,16 +34,46 @@ st.markdown("""
         margin: 0 auto;
     }
     
-    /* Save Button Stylish & Compact */
-    .stButton > button {
+    /* General Standard Button (Save to Journal) */
+    .stButton > button[kind="secondary"] {
         border-radius: 20px !important;
         border: 1px solid #1f77b4 !important;
         background-color: transparent !important;
         color: #1f77b4 !important;
         transition: all 0.3s ease !important;
     }
-    .stButton > button:hover {
+    .stButton > button[kind="secondary"]:hover {
         background-color: #1f77b4 !important;
+        color: white !important;
+        transform: scale(1.05);
+    }
+    
+    /* DOWNLOAD CSV BUTTON */
+    .stDownloadButton > button {
+        border-radius: 20px !important;
+        border: 1px solid #1f77b4 !important;
+        background-color: transparent !important;
+        color: #1f77b4 !important;
+        transition: all 0.3s ease !important;
+        width: 155px !important; /* Matches Date & Time header width */
+    }
+    .stDownloadButton > button:hover {
+        background-color: #1f77b4 !important;
+        color: white !important;
+        transform: scale(1.05);
+    }
+
+    /* CLEAR ALL DATA BUTTON (Primary) */
+    .stButton > button[kind="primary"] {
+        border-radius: 20px !important;
+        border: 1px solid #ff4b4b !important;
+        background-color: transparent !important;
+        color: #ff4b4b !important;
+        transition: all 0.3s ease !important;
+        width: 155px !important; /* Exact same width as Download CSV */
+    }
+    .stButton > button[kind="primary"]:hover {
+        background-color: #ff4b4b !important;
         color: white !important;
         transform: scale(1.05);
     }
@@ -112,7 +142,6 @@ def create_gauge_chart(score):
     return fig
 
 def save_to_journal(event_name, score, direction_text, inputs_dict):
-    # Set explicitly to Sri Lanka Timezone
     sl_tz = pytz.timezone('Asia/Colombo')
     current_time = datetime.datetime.now(sl_tz).strftime("%Y-%m-%d %H:%M")
     
@@ -947,18 +976,19 @@ with tab2:
                 
         # --- UI Balanced Action Buttons (Download & Clear) ---
         st.markdown("<br>", unsafe_allow_html=True)
-        dl_col, clr_col = st.columns([1, 1])
+        # Using the exact same ratio as the headers so buttons align perfectly under columns
+        dl_col, space1, space2, space3, clr_col = st.columns([2, 3, 2, 3, 1.2])
         
         with dl_col:
             df = pd.DataFrame(st.session_state['journal'])
             df_export = df.drop(columns=['Inputs']) # Exclude raw dictionary from CSV for cleaner look
             csv = df_export.to_csv(index=False).encode('utf-8')
-            dl_txt = "📥 Download CSV" if lang == "English" else "📥 දත්ත CSV ලෙස සේව් කරන්න"
-            st.download_button(label=dl_txt, data=csv, file_name='macro_journal.csv', mime='text/csv', use_container_width=True)
+            dl_txt = "📥 Download CSV" if lang == "English" else "📥 Download CSV" 
+            st.download_button(label=dl_txt, data=csv, file_name='macro_journal.csv', mime='text/csv')
             
         with clr_col:
-            clr_txt = "🗑️ Clear All Data" if lang == "English" else "🗑️ සියලුම දත්ත මකන්න"
-            if st.button(clr_txt, type="primary", use_container_width=True):
+            clr_txt = "🗑️ Clear All Data" if lang == "English" else "🗑️ සියලු දත්ත මකන්න" 
+            if st.button(clr_txt, type="primary"): 
                 st.session_state['journal'] = []
                 st.session_state['loaded_data'] = None
                 st.rerun()
