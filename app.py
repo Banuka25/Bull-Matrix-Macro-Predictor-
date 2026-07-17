@@ -154,7 +154,7 @@ def save_to_journal(event_name, score, direction_text, inputs_dict):
         "Inputs": inputs_dict 
     }
     st.session_state['journal'].append(entry)
-    msg = "✅ Saved to Journal!" if lang == "English" else "✅ ජර්නල් එකට සේව් කළා!"
+    msg = "Saved to Journal!" if lang == "English" else "ජර්නල් එකට සේව් කළා!"
     st.toast(msg)
 
 def get_idx(event_name, input_key, options_list):
@@ -195,7 +195,6 @@ else:
 
 st.markdown("---")
 
-# Added 4th Tab for Live Calendar
 tab_names = ["🔮 Live Predictor", "📓 Trading Journal", "📚 Historical Case Studies", "📅 Live Calendar"] if lang == "English" else ["🔮 සජීවී පුරෝකථනය", "📓 ට්‍රේඩින් ජර්නල් එක", "📚 අතීත සිදුවීම් අධ්‍යයනය", "📅 සජීවී දින දර්ශනය"]
 tab1, tab2, tab3, tab4 = st.tabs(tab_names)
 
@@ -266,7 +265,7 @@ with tab1:
             nas100_val = us30_val = spx500_val = status_val
             nas100_svg = us30_svg = spx500_svg = status_svg
 
-        st.subheader("🗺️ Expected Impact on Major Pairs & Gold" if lang == "English" else "🗺️ ප්‍රධාන වෙළඳපොළවල් සඳහා බලපෑම")
+        st.subheader("🗺️ Expected Impact on Major Pairs & Gold" if lang == "English" else "🗺️ 👀 ප්‍රධාන වෙළඳපොළවල් සඳහා බලපෑම")
         p_col1, p_col2, p_col3, p_col4, p_col5 = st.columns(5)
         p_col1.markdown(render_custom_metric("EUR/USD", eurusd_val, eurusd_svg), unsafe_allow_html=True)
         p_col2.markdown(render_custom_metric("GBP/USD", gbpusd_val, gbpusd_svg), unsafe_allow_html=True)
@@ -682,7 +681,7 @@ with tab1:
         tt_gdp_fc = "Enter the Market Forecast for 'Advance GDP q/q'." if lang == "English" else "Forex Factory හි 'Advance GDP q/q' සඳහා වෙළඳපොළ බලාපොරොත්තු වන Forecast අගය මෙහි යොදන්න."
         tt_atl = "Check the 'GDPNow' Live Tracker on the official Atlanta Fed website." if lang == "English" else "Atlanta Fed නිල වෙබ් අඩවියේ ඇති 'GDPNow' Live Tracker අගය බලන්න."
         tt_ret_q = "Observe the average trend of 'Retail Sales m/m' over the past 3 months." if lang == "English" else "පසුගිය මාස 3 තුළ නිකුත් වූ 'Retail Sales m/m' වල සාමාන්‍ය හැසිරීම බලන්න."
-        tt_trade = "Check if the export-import gap has narrowed via the 'Trade Balance' news." if lang == "English" else "'Trade Balance' නිවුස් හරහා අපනයන සහ ආනයන පරතරය අඩු වී ඇත්දැයි බලන්න."
+        tt_trade = "Check if the export-import gap has narrowed via the 'Trade Balance' news." if lang == "English" else "'Trade Balance' නිවුස් හරහා අපනයන සහ ਆනයන පරතරය අඩු වී ඇත්දැයි බලන්න."
         tt_pmi_c = "Look at the average of ISM Manufacturing and Services PMIs over the past 3 months." if lang == "English" else "පසුගිය මාස 3 තුළ ISM Manufacturing සහ Services PMI වල සාමාන්‍ය තත්ත්වය බලන්න."
         tt_dur = "Check the recently released 'Core Durable Goods Orders m/m' data." if lang == "English" else "මෑතකදී නිකුත් වූ 'Core Durable Goods Orders m/m' දත්තය දෙස බලන්න."
 
@@ -1015,8 +1014,8 @@ with tab3:
             * **Result:** Jerome Powell delivered a dovish press conference, and the Dot Plot showed 3 rate cuts for 2024. DXY dumped aggressively, sending XAU/USD (Gold) and US Indices (NASDAQ/US30) to all-time highs.
             """)
     else:
-        st.header("📚 අතීත සිදුවීම් අධ්‍යයනය")
-        st.write("අතීතයේ ආර්ථික දත්ත ඩොලරයට බලපාපු විදිය මෙතනින් අධ්‍යයනය කරන්න.")
+        st.header("📚 അතීත සිදුවීම් අධ්‍යയනය")
+        st.write("අතീතයේ ආර්ථික දත්ත ඩොലරයට බලපාපු විදිය මෙතനින් අධ්‍යയනය කරන්න.")
         
         with st.expander("📌 1 වන අධ්‍යයනය: පශ්චාත්-කොවිඩ් උද්ධමන කම්පනය (2022 CPI)"):
             st.write("""
@@ -1029,25 +1028,74 @@ with tab3:
         with st.expander("📌 2 වන අධ්‍යයනය: Dovish Pivot අපේක්ෂාවන් (2023 අගභාගයේ FOMC)"):
             st.write("""
             **තත්ත්වය:** උද්ධමනය 3% දක්වා වේගයෙන් පහත වැටෙමින් තිබුණි.
-            * **පෙරගමන් දත්ත:** Core PCE අඛණ්ඩව පහත වැටෙන බව පෙන්නුම් කළේය. Jobless claims (රැකියා විරහිත දත්ත) තරමක් ඉහළ යාමට පටන් ගෙන තිබුණි. Fed නිලධාරීන්ගේ ප්‍රකාශ (Fedspeak) 'තවත් පොලී වැඩි කළ යුතුයි' යන තැනින් මිදී 'දැනට ඇති, අපි බලා සිටිමු' යන තැනට මාරු වී තිබුණි.
+            * **පෙරගමන් දත්ත:** Core PCE අඛණ්ඩව පහත වැටෙන බවᵖ පෙන්නුම් කළේය. Jobless claims (රැකියා විරහිත දත්ත) තරමත් ඉහළ යාමට පටන් ගෙන තිබුණි. Fed නිලධාරීන්ගේ ප්‍රකාශ (Fedspeak) 'තවත් පොලී වැඩි කළ යුතුයි' යන තැනින් මිදී 'දැනට ඇති, අපි බලා සිටිමු' යන තැනට මාරু වී තිබුණි.
             * **පුරෝකථන මෙවලමේ ලකුණ:** 35% Bearish (DXY).
             * **ප්‍රතිඵලය:** ජෙරොම් පවෙල් (Jerome Powell) විසින් Dovish මාධ්‍ය සාකච්ඡාවක් ලබා දුන් අතර, Dot Plot මගින් 2024 වසර සඳහා පොලී අනුපාත කප්පාදු 3ක් පෙන්වා දෙන ලදී. මේ නිසා DXY දර්ශකය වේගයෙන් කඩා වැටුණු අතර, XAU/USD (රන්) සහ US Indices (NASDAQ/US30) සර්වකාලීන උපරිම අගයන් (All-time highs) දක්වා ඉහළ ගියේය.
             """)
 
-# --- NEW TAB: LIVE ECONOMIC CALENDAR ---
+# --- NEW TAB: LIVE ECONOMIC CALENDAR WITH BULL MATRIX GUIDE MAP ---
 with tab4:
     if lang == "English":
-        st.header("📅 Live Economic Calendar")
-        st.write("View upcoming and historical macroeconomic events directly from TradingView. You can filter by date to find past leading data.")
+        st.header("📅 Live Economic Calendar & Macro Guide Map")
+        st.write("Use the Color Map below to find the specific Leading Indicators inside the Live Calendar window.")
     else:
-        st.header("📅 සජීවී ආර්ථික දින දර්ශනය")
-        st.write("TradingView වෙතින් සජීවීව සහ අතීත ආර්ථික දත්ත මෙතනින් නරඹන්න. දින දර්ශනය හරහා පරණ දිනවලට ගොස් අවශ්‍ය Leading Data සොයාගත හැක.")
+        st.header("📅 සජීවී දින දර්ශනය සහ මැක්‍රෝ වර්ණ සිතියම")
+        st.write("පහත දැක්වෙන වර්ණ සිතියම (Color Map) උපකාර කරගෙන සජීවී දින දර්ශනය තුළ ඇති අදාළ පෙරගමන් දත්ත (Leading Indicators) පහසුවෙන් සොයාගන්න.")
     
-    st.markdown("<br>", unsafe_allow_html=True)
+    # --- INTERACTIVE VISUAL GUIDE MAP ---
+    st.markdown("""
+    <div style="background-color: rgba(255, 255, 255, 0.02); border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 12px; padding: 18px; margin-bottom: 20px;">
+        <p style="font-size: 15px; font-weight: bold; color: #00ffcc; margin-bottom: 12px; display: flex; align-items: center; gap: 8px;">
+            🎨 🗺️ Bull Matrix Macro Color Map
+        </p>
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 15px;">
+            
+            <!-- CPI Color Block -->
+            <div style="border-left: 4px solid #00E5FF; padding-left: 10px; background-color: rgba(0,229,255,0.03); padding-top: 5px; padding-bottom: 5px; border-radius: 4px;">
+                <b style="color: #00E5FF; font-size: 14px;">🟢 CPI (Consumer Price Index)</b>
+                <div style="font-size: 12px; color: #b0b0b0; margin-top: 5px; line-height: 1.4;">
+                    • Core PPI m/m<br>• WTI Crude Oil Prices<br>• NY Fed Inflation Expect.<br>• ISM Prices Paid<br>• Import Price Index
+                </div>
+            </div>
+
+            <!-- NFP Color Block -->
+            <div style="border-left: 4px solid #FF9800; padding-left: 10px; background-color: rgba(255,152,0,0.03); padding-top: 5px; padding-bottom: 5px; border-radius: 4px;">
+                <b style="color: #FF9800; font-size: 14px;">🟠 NFP (Non-Farm Payrolls)</b>
+                <div style="font-size: 12px; color: #b0b0b0; margin-top: 5px; line-height: 1.4;">
+                    • ADP Employment Change<br>• ISM Services Employment<br>• JOLTs Job Openings<br>• Initial Jobless Claims<br>• Challenger Job Cuts
+                </div>
+            </div>
+
+            <!-- PCE Color Block -->
+            <div style="border-left: 4px solid #E040FB; padding-left: 10px; background-color: rgba(224,64,251,0.03); padding-top: 5px; padding-bottom: 5px; border-radius: 4px;">
+                <b style="color: #E040FB; font-size: 14px;">🟣 Core PCE Price Index</b>
+                <div style="font-size: 12px; color: #b0b0b0; margin-top: 5px; line-height: 1.4;">
+                    • Core CPI m/m<br>• Core PPI m/m<br>• Average Hourly Earnings<br>• Retail Sales m/m
+                </div>
+            </div>
+
+            <!-- GDP Color Block -->
+            <div style="border-left: 4px solid #2979FF; padding-left: 10px; background-color: rgba(41,121,255,0.03); padding-top: 5px; padding-bottom: 5px; border-radius: 4px;">
+                <b style="color: #2979FF; font-size: 14px;">🔵 Advance GDP</b>
+                <div style="font-size: 12px; color: #b0b0b0; margin-top: 5px; line-height: 1.4;">
+                    • Atlanta Fed GDPNow<br>• Retail Sales (Q. Avg)<br>• Trade Balance<br>• ISM Composite PMI<br>• Durable Goods Orders
+                </div>
+            </div>
+
+            <!-- FOMC Color Block -->
+            <div style="border-left: 4px solid #FF5252; padding-left: 10px; background-color: rgba(255,82,82,0.03); padding-top: 5px; padding-bottom: 5px; border-radius: 4px;">
+                <b style="color: #FF5252; font-size: 14px;">🔴 FOMC Rate Decision</b>
+                <div style="font-size: 12px; color: #b0b0b0; margin-top: 5px; line-height: 1.4;">
+                    • CME FedWatch Probability<br>• Core PCE/CPI Trend<br>• Labor Market (NFP/Claims)<br>• Recent Fedspeak Rhetoric<br>• Financial Conditions Index
+                </div>
+            </div>
+
+        </div>
+    </div>
+    """, unsafe_allow_html=True)
     
-    # Embedding the Official TradingView Economic Calendar Widget
-    tv_widget = """
-    <!-- TradingView Widget BEGIN -->
+    # Live TradingView Calendar Window
+    components.html("""
     <div class="tradingview-widget-container">
       <div class="tradingview-widget-container__widget"></div>
       <script type="text/javascript" src="https://s3.tradingview.com/external-embedding/embed-widget-events.js" async>
@@ -1062,6 +1110,4 @@ with tab4:
     }
       </script>
     </div>
-    <!-- TradingView Widget END -->
-    """
-    components.html(tv_widget, height=800, scrolling=True)
+    """, height=800, scrolling=True)
