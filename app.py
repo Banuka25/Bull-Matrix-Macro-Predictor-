@@ -106,7 +106,6 @@ def create_gauge_chart(score):
     fig.update_layout(paper_bgcolor="#0e1117", font={'color': "white"}, height=300, margin=dict(l=20, r=20, t=50, b=20))
     return fig
 
-# Helper function to save predictions WITH EXACT INPUTS
 def save_to_journal(event_name, score, direction_text, inputs_dict):
     entry = {
         "Date & Time": datetime.datetime.now().strftime("%Y-%m-%d %H:%M"),
@@ -118,7 +117,6 @@ def save_to_journal(event_name, score, direction_text, inputs_dict):
     st.session_state['journal'].append(entry)
     st.toast(f"✅ Saved to Journal!")
 
-# Helper to safely set Selectbox Index when Loading
 def get_idx(event_name, input_key, options_list):
     if st.session_state['loaded_data'] and st.session_state['loaded_data']['News Event'] == event_name:
         val = st.session_state['loaded_data']['Inputs'].get(input_key)
@@ -126,13 +124,12 @@ def get_idx(event_name, input_key, options_list):
             return options_list.index(val)
     return 0
 
-# Helper to safely set Number Input when Loading
 def get_num_val(event_name, input_key, default_val):
     if st.session_state['loaded_data'] and st.session_state['loaded_data']['News Event'] == event_name:
         return st.session_state['loaded_data']['Inputs'].get(input_key, default_val)
     return default_val
 
-# --- SMARTER API Fetch Function ---
+# --- BULLETPROOF API Fetch Function ---
 @st.cache_data(ttl=3600)
 def fetch_macro_data_from_fmp(event_type):
     try:
@@ -140,8 +137,8 @@ def fetch_macro_data_from_fmp(event_type):
         if not api_key: return "NO_KEY", "API Key is missing in Secrets."
         
         today = datetime.datetime.now()
-        # Expanded search window to 60 days to catch all monthly/quarterly events
-        start = (today - datetime.timedelta(days=30)).strftime("%Y-%m-%d")
+        # සෙවුම් පරාසය දින 120ක් දක්වා වැඩි කළා (පස්සට 90යි, ඉස්සරහට 30යි)
+        start = (today - datetime.timedelta(days=90)).strftime("%Y-%m-%d")
         end = (today + datetime.timedelta(days=30)).strftime("%Y-%m-%d")
         
         url = f"https://financialmodelingprep.com/api/v3/economic_calendar?from={start}&to={end}&apikey={api_key}"
@@ -150,21 +147,24 @@ def fetch_macro_data_from_fmp(event_type):
         if res.status_code == 200:
             data = res.json()
             
-            # Check if FMP returned an error (e.g., limit reached, unverified email)
             if isinstance(data, dict) and "Error Message" in data:
                 return "API_ERROR", data["Error Message"]
                 
             if isinstance(data, list):
-                # Broader keywords to match FMP's naming conventions
+                if len(data) == 0:
+                    return "API_EMPTY", "දත්ත ගබඩාව හිස්ව පවතී (Free Tier Restriction)"
+
                 keywords = []
-                if event_type == "CPI (Consumer Price Index)": keywords = ["cpi", "consumer price", "inflation rate"]
-                elif event_type == "NFP (Non-Farm Payrolls)": keywords = ["non farm", "nonfarm", "payrolls"]
-                elif event_type == "Core PCE Price Index": keywords = ["pce price index", "core pce", "personal consumption"]
-                elif event_type == "Advance GDP": keywords = ["gdp growth", "gross domestic product"]
-                elif event_type == "FOMC Rate Decision": keywords = ["fed interest rate", "fomc", "interest rate decision", "fed rate"]
+                if event_type == "CPI (Consumer Price Index)": keywords = ["cpi", "consumer price", "inflation"]
+                elif event_type == "NFP (Non-Farm Payrolls)": keywords = ["non farm", "nonfarm", "payrolls", "employment"]
+                elif event_type == "Core PCE Price Index": keywords = ["pce", "personal consumption"]
+                elif event_type == "Advance GDP": keywords = ["gdp", "gross domestic product"]
+                elif event_type == "FOMC Rate Decision": keywords = ["fed", "fomc", "interest rate", "rate decision"]
 
                 for item in data:
-                    if item.get("country") == "US":
+                    country = str(item.get("country", "")).upper()
+                    # රට US හෝ United States ලෙස තිබුණත් අඳුරගන්න පුළුවන් විදියට හැදුවා
+                    if country in ["US", "UNITED STATES", "USA"]:
                         event_name = str(item.get("event", "")).lower()
                         for kw in keywords:
                             if kw in event_name:
@@ -179,7 +179,6 @@ def fetch_macro_data_from_fmp(event_type):
         
     return None, None
 
-# --- Custom SVG Icons Definition ---
 svg_bullish = '''<svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><circle cx="12" cy="12" r="12" fill="#4CAF50"/><path d="M7 15 L10.5 11.5 L13 14 L17 9 M13 9 H17 V13" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>'''
 svg_bearish = '''<svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><circle cx="12" cy="12" r="12" fill="#F44336"/><path d="M7 9 L10.5 12.5 L13 10 L17 15 M13 15 H17 V11" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>'''
 svg_ranging = '''<svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><circle cx="12" cy="12" r="12" fill="#FFC107"/><path d="M8 10 L6 12 L8 14 M16 10 L18 12 L16 14 M6 12 H18" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>'''
@@ -224,7 +223,10 @@ with tab1:
             st.sidebar.warning("⚠️ API Key is missing in Secrets.")
             api_prev, api_fc = None, None
         elif api_prev == "API_ERROR":
-            st.sidebar.error(f"⚠️ FMP Server Error: {api_fc}") # Displays exactly what FMP is complaining about
+            st.sidebar.error(f"⚠️ FMP Error: {api_fc}") 
+            api_prev, api_fc = None, None
+        elif api_prev == "API_EMPTY":
+            st.sidebar.warning(f"⚠️ {api_fc}")
             api_prev, api_fc = None, None
         elif api_prev == "CODE_ERROR":
             st.sidebar.error("⚠️ Connection Error. Check requirements.txt.")
@@ -232,7 +234,7 @@ with tab1:
         elif api_prev is not None and api_fc is not None:
             st.sidebar.success("✅ Live Data Synced!")
         else:
-            st.sidebar.info("⏳ No upcoming data found for this event in the current 60-day window.")
+            st.sidebar.info("⏳ No upcoming data found for this event in the current 120-day window.")
 
     # --- Bull Matrix Personal Branding Footer ---
     st.sidebar.markdown("<br><br><br>", unsafe_allow_html=True)
