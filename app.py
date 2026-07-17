@@ -146,9 +146,12 @@ def save_to_journal(event_name, score, direction_text, inputs_dict):
     sl_tz = pytz.timezone('Asia/Colombo')
     current_time = datetime.datetime.now(sl_tz).strftime("%Y-%m-%d %H:%M")
     
+    # Strip the dot emoji for clean journal entry matching
+    clean_event = event_name.replace("🟢 ", "").replace("🟠 ", "").replace("🟣 ", "").replace("🔵 ", "").replace("🔴 ", "")
+    
     entry = {
         "Date & Time": current_time,
-        "News Event": event_name,
+        "News Event": clean_event,
         "DXY Score": f"{score}%",
         "Predicted Direction": direction_text,
         "Inputs": inputs_dict 
@@ -158,14 +161,16 @@ def save_to_journal(event_name, score, direction_text, inputs_dict):
     st.toast(msg)
 
 def get_idx(event_name, input_key, options_list):
-    if st.session_state['loaded_data'] and st.session_state['loaded_data']['News Event'] == event_name:
+    clean_event = event_name.replace("🟢 ", "").replace("🟠 ", "").replace("🟣 ", "").replace("🔵 ", "").replace("🔴 ", "")
+    if st.session_state['loaded_data'] and st.session_state['loaded_data']['News Event'] == clean_event:
         val = st.session_state['loaded_data']['Inputs'].get(input_key)
         if val in options_list:
             return options_list.index(val)
     return 0
 
 def get_num_val(event_name, input_key, default_val):
-    if st.session_state['loaded_data'] and st.session_state['loaded_data']['News Event'] == event_name:
+    clean_event = event_name.replace("🟢 ", "").replace("🟠 ", "").replace("🟣 ", "").replace("🔵 ", "").replace("🔴 ", "")
+    if st.session_state['loaded_data'] and st.session_state['loaded_data']['News Event'] == clean_event:
         return st.session_state['loaded_data']['Inputs'].get(input_key, default_val)
     return default_val
 
@@ -193,10 +198,12 @@ tab1, tab2, tab3, tab4 = st.tabs(tab_names)
 with tab1:
     st.sidebar.header("📅 Select Major News Event" if lang == "English" else "📅 ප්‍රධාන නිවුස් එක තෝරන්න")
     
-    events_list = ["CPI (Consumer Price Index)", "NFP (Non-Farm Payrolls)", "Core PCE Price Index", "Advance GDP", "FOMC Rate Decision"]
+    # Added Color Dots directly to Sidebar Menu Items for seamless UX
+    events_list = ["🟢 CPI (Consumer Price Index)", "🟠 NFP (Non-Farm Payrolls)", "🟣 Core PCE Price Index", "🔵 Advance GDP", "🔴 FOMC Rate Decision"]
     default_event_idx = 0
-    if st.session_state['loaded_data'] and st.session_state['loaded_data']['News Event'] in events_list:
-        default_event_idx = events_list.index(st.session_state['loaded_data']['News Event'])
+    if st.session_state['loaded_data'] and st.session_state['loaded_data']['News Event'] in [e[4:] for e in events_list]:
+        raw_events = [e[4:] for e in events_list]
+        default_event_idx = raw_events.index(st.session_state['loaded_data']['News Event'])
 
     major_news = st.sidebar.radio("Choose Event:" if lang == "English" else "නිවුස් එක තෝරන්න:", events_list, index=default_event_idx)
 
@@ -265,20 +272,20 @@ with tab1:
             if st.button(btn_txt, key=f"btn_{event_name}"):
                 save_to_journal(event_name, score, direction.replace("🚀", "").replace("📉", "").replace("⚖️", "").strip(), inputs_dict)
 
-    sub_report_txt = "📥 Input Sub-Report Data" if lang == "English" else "📥 අනු-වාර්තා දත්ත ඇතුළත් කරන්න"
+    sub_report_txt = "📥 Input Sub-Report Data" if lang == "English" else "📥 אනු-වාර්තා දත්ත ඇතුළත් කරන්න"
     live_pred_txt = "🔮 Live Market Prediction" if lang == "English" else "🔮 සජීවී වෙළඳපොළ පුරෝකථනය"
-    prev_txt = "📉 Previous Value" if lang == "English" else "📉 පෙර අගය (Previous)"
-    fc_txt = "📊 Market Forecast" if lang == "English" else "📊 වෙළඳපොළ අපේක්ෂාව (Forecast)"
+    prev_txt = "Previous Value" if lang == "English" else "පෙර අගය (Previous)"
+    fc_txt = "Market Forecast" if lang == "English" else "වෙළඳපොළ අපේක්ෂාව (Forecast)"
 
-    # ----------------- 1. CPI CALCULATOR -----------------
-    if major_news == "CPI (Consumer Price Index)":
-        st.header("🧮 CPI Leading Data Calculator" if lang == "English" else "🧮 CPI දත්ත කැල්කියුලේටරය")
+    # ----------------- 1. CPI CALCULATOR (GREEN 🟢) -----------------
+    if major_news.startswith("🟢 CPI"):
+        st.header("🟢 🧮 CPI Leading Data Calculator" if lang == "English" else "🟢 🧮 CPI දත්ත කැල්කියුලේටරය")
         col_left, col_mid, col_right = st.columns([20, 1, 30])
-        opt_ppi = ["Higher than Consensus", "Neutral", "Lower than Consensus"]
-        opt_gas = ["Rising (Inflationary)", "Stable", "Falling (Deflationary)"]
-        opt_nyfed = ["Increased", "Unchanged", "Decreased"]
-        opt_pmi = ["Increasing Rapidly (>55)", "Neutral", "Decreasing (<50)"]
-        opt_imp = ["Rising", "Stable", "Falling"]
+        opt_ppi = ["Consensus වලට වඩා වැඩි", "Neutral", "Consensus වලට වඩා අඩු"] if lang == "සිංහල" else ["Higher than Consensus", "Neutral", "Lower than Consensus"]
+        opt_gas = ["ඉහළ යනවා (Inflationary)", "ස්ථාවරයි", "පහළ යනවා (Deflationary)"] if lang == "සිංහල" else ["Rising (Inflationary)", "Stable", "Falling (Deflationary)"]
+        opt_nyfed = ["වැඩිවී ඇත", "වෙනස් වී නැත", "අඩුවී ඇත"] if lang == "සිංහල" else ["Increased", "Unchanged", "Decreased"]
+        opt_pmi = ["වේගයෙන් ඉහළ යයි (>55)", "Neutral", "පහළ යයි (<50)"] if lang == "සිංහල" else ["Increasing Rapidly (>55)", "Neutral", "Decreasing (<50)"]
+        opt_imp = ["ඉහළ යනවා", "ස්ථාවරයි", "පහළ යනවා"] if lang == "සිංහල" else ["Rising", "Stable", "Falling"]
         
         tt_cpi_prev = "Use 'Core CPI m/m' from Forex Factory. Previous is the actual figure from the last month." if lang == "English" else "Forex Factory හි 'Core CPI m/m' (මාසික අගය) භාවිතා කරන්න. Previous යනු පසුගිය මාසයේ සැබෑ අගයයි."
         tt_cpi_fc = "Enter the Market Forecast for 'Core CPI m/m' from Forex Factory." if lang == "English" else "Forex Factory හි 'Core CPI m/m' සඳහා වෙළඳපොළ බලාපොරොත්තු වන Forecast අගය මෙහි යොදන්න."
@@ -292,16 +299,16 @@ with tab1:
             st.subheader(sub_report_txt)
             col_prev, col_fc = st.columns(2)
             with col_prev:
-                cpi_previous = st.number_input(f"{prev_txt} (%):", value=get_num_val(major_news, "cpi_prev", 0.3), step=0.1, format="%.1f", help=tt_cpi_prev)
+                cpi_previous = st.number_input(f"🟢 📉 {prev_txt} (%):", value=get_num_val(major_news, "cpi_prev", 0.3), step=0.1, format="%.1f", help=tt_cpi_prev)
             with col_fc:
-                cpi_forecast = st.number_input(f"{fc_txt} (%):", value=get_num_val(major_news, "cpi_fc", 0.2), step=0.1, format="%.1f", help=tt_cpi_fc)
+                cpi_forecast = st.number_input(f"🟢 📊 {fc_txt} (%):", value=get_num_val(major_news, "cpi_fc", 0.2), step=0.1, format="%.1f", help=tt_cpi_fc)
             st.markdown("<br>", unsafe_allow_html=True)
             
-            l1 = "1. PPI Trend:" if lang == "English" else "1. PPI ප්‍රවණතාව:"
-            l2 = "2. Gasoline / Energy Prices:" if lang == "English" else "2. ඉන්ධන / බලශක්ති මිල:"
-            l3 = "3. NY Fed 1-Yr Inflation Expectations:" if lang == "English" else "3. NY Fed උද්ධමන අපේක්ෂාව:"
-            l4 = "4. ISM Services/Mfg Prices Paid:" if lang == "English" else "4. ISM Prices Paid අගය:"
-            l5 = "5. Import Prices:" if lang == "English" else "5. ආනයන මිල දර්ශකය:"
+            l1 = "🟢 1. PPI Trend:" if lang == "English" else "🟢 1. PPI ප්‍රවණතාව:"
+            l2 = "🟢 2. Gasoline / Energy Prices:" if lang == "English" else "🟢 2. ඉන්ධන / බලශක්ති මිල:"
+            l3 = "🟢 3. NY Fed 1-Yr Inflation Expectations:" if lang == "English" else "🟢 3. NY Fed උද්ධමන අපේක්ෂාව:"
+            l4 = "🟢 4. ISM Services/Mfg Prices Paid:" if lang == "English" else "🟢 4. ISM Prices Paid අගය:"
+            l5 = "🟢 5. Import Prices:" if lang == "English" else "🟢 5. ආනයන මිල දර්ශකය:"
 
             ppi_input = st.selectbox(l1, opt_ppi, index=get_idx(major_news, "ppi", opt_ppi), help=tt_ppi)
             gasoline = st.selectbox(l2, opt_gas, index=get_idx(major_news, "gas", opt_gas), help=tt_gas)
@@ -332,7 +339,7 @@ with tab1:
             render_market_metrics(score)
 
             inputs_dict = {"cpi_prev": cpi_previous, "cpi_fc": cpi_forecast, "ppi": ppi_input, "gas": gasoline, "nyfed": ny_fed, "pmi": pmi_prices, "imp": import_prices}
-            render_save_button("CPI (Consumer Price Index)", score, direction, inputs_dict)
+            render_save_button(major_news, score, direction, inputs_dict)
             
             st.markdown("<hr style='border: none; border-top: 1px solid rgba(255, 255, 255, 0.15); margin: 25px 0;'/>", unsafe_allow_html=True)
 
@@ -369,15 +376,15 @@ with tab1:
 
             st.markdown(f'''<div style="background-color: rgba(255, 255, 255, 0.03); border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 10px; padding: 15px;"><div style="font-size: 14px; color: #a0a0a0; margin-bottom: 15px; display: flex; align-items: center; gap: 8px;">🤖 <b>AI Advanced Forecast Radar</b></div><div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;"><div style="text-align: left;"><div style="font-size: 11px; color: gray; text-transform: uppercase;">{p_lbl}</div><div style="font-size: 22px; font-weight: bold; color: #a0a0a0;">{cpi_previous:.1f}%</div></div><div style="text-align: center;"><div style="font-size: 11px; color: gray; text-transform: uppercase;">{f_lbl}</div><div style="font-size: 22px; font-weight: bold; color: white;">{cpi_forecast:.1f}%</div></div><div style="text-align: right;"><div style="font-size: 11px; color: gray; text-transform: uppercase;">{r_lbl}</div><div style="font-size: 22px; font-weight: bold; color: {dev_color};">{lower_bound:.2f}% - {upper_bound:.2f}%</div></div></div><div style="background: rgba(0,0,0,0.3); padding: 10px; border-radius: 5px;"><div style="font-size: 14px; color: {dev_color}; font-weight: bold; text-align: center; margin-bottom: 5px;">{dev_signal}</div><div style="font-size: 12px; color: #d0d0d0; text-align: center; line-height: 1.4;">{dev_desc}</div></div></div>''', unsafe_allow_html=True)
 
-    # ----------------- 2. NFP CALCULATOR -----------------
-    elif major_news == "NFP (Non-Farm Payrolls)":
-        st.header("💼 NFP Leading Data Calculator" if lang == "English" else "💼 NFP දත්ත කැල්කියුලේටරය")
+    # ----------------- 2. NFP CALCULATOR (ORANGE 🟠) -----------------
+    elif major_news.startswith("🟠 NFP"):
+        st.header("🟠 💼 NFP Leading Data Calculator" if lang == "English" else "🟠 💼 NFP දත්ත කැල්කියුලේටරය")
         col_left, col_mid, col_right = st.columns([20, 1, 30])
-        opt_adp = ["Strong Beat", "Neutral / As Expected", "Big Miss"]
-        opt_ism = ["Expanding (>50)", "Neutral", "Contracting (<50)"]
-        opt_jolts = ["Increasing (Strong Demand)", "Neutral", "Decreasing (Weak Demand)"]
-        opt_jobless = ["Consistently Low (<200k)", "Neutral", "Rising Rapidly (>250k)"]
-        opt_chal = ["Low Layoffs", "Average", "High Layoffs"]
+        opt_adp = ["ඉතා ඉහළයි (Strong Beat)", "Neutral / සාමාන්‍යයි", "ඉතා අඩුයි (Big Miss)"] if lang == "සිංහල" else ["Strong Beat", "Neutral / As Expected", "Big Miss"]
+        opt_ism = ["වර්ධනය වේ (>50)", "Neutral", "අඩු වේ (<50)"] if lang == "සිංහල" else ["Expanding (>50)", "Neutral", "Contracting (<50)"]
+        opt_jolts = ["ඉහළ යනවා (ප්‍රබල ඉල්ලුම)", "Neutral", "පහළ යනවා (අඩු ඉල්ලුම)"] if lang == "සිංහල" else ["Increasing (Strong Demand)", "Neutral", "Decreasing (Weak Demand)"]
+        opt_jobless = ["අඛණ්ඩව අඩුයි (<200k)", "Neutral", "වේගයෙන් ඉහළ යයි (>250k)"] if lang == "සිංහල" else ["Consistently Low (<200k)", "Neutral", "Rising Rapidly (>250k)"]
+        opt_chal = ["අඩු රැකියා කප්පාදුවක්", "සාමාන්‍යයි", "වැඩි රැකියා කප්පාදුවක්"] if lang == "සිංහල" else ["Low Layoffs", "Average", "High Layoffs"]
         
         tt_nfp_prev = "Use 'Non-Farm Employment Change' from Forex Factory. (e.g., For 200K, enter 200)." if lang == "English" else "Forex Factory හි 'Non-Farm Employment Change' අගය භාවිතා කරන්න. (උදා: 200K නම් 200 ලෙස පමණක් යොදන්න)."
         tt_nfp_fc = "Enter the Market Forecast for 'Non-Farm Employment Change'." if lang == "English" else "Forex Factory හි 'Non-Farm Employment Change' සඳහා වෙළඳපොළ බලාපොරොත්තු වන Forecast අගය මෙහි යොදන්න."
@@ -391,16 +398,16 @@ with tab1:
             st.subheader(sub_report_txt)
             col_prev, col_fc = st.columns(2)
             with col_prev:
-                nfp_previous = st.number_input(f"{prev_txt} (k):", value=int(get_num_val(major_news, "nfp_prev", 200)), step=10, format="%d", help=tt_nfp_prev)
+                nfp_previous = st.number_input(f"🟠 📉 {prev_txt} (k):", value=get_num_val(major_news, "nfp_prev", 200), step=10, format="%d", help=tt_nfp_prev)
             with col_fc:
-                nfp_forecast = st.number_input(f"{fc_txt} (k):", value=int(get_num_val(major_news, "nfp_fc", 180)), step=10, format="%d", help=tt_nfp_fc)
+                nfp_forecast = st.number_input(f"🟠 📊 {fc_txt} (k):", value=get_num_val(major_news, "nfp_fc", 180), step=10, format="%d", help=tt_nfp_fc)
             st.markdown("<br>", unsafe_allow_html=True)
 
-            l1 = "1. ADP Employment Change:" if lang == "English" else "1. ADP රැකියා දත්තය:"
-            l2 = "2. ISM Services Employment:" if lang == "English" else "2. ISM සේවා අංශයේ රැකියා:"
-            l3 = "3. JOLTs Job Openings:" if lang == "English" else "3. JOLTs රැකියා පුරප්පාඩු:"
-            l4 = "4. Initial Jobless Claims:" if lang == "English" else "4. සතිපතා රැකියා විරහිත දත්තය:"
-            l5 = "5. Challenger Job Cuts:" if lang == "English" else "5. ආයතනික රැකියා කප්පාදුව:"
+            l1 = "🟠 1. ADP Employment Change:" if lang == "English" else "🟠 1. ADP රැකියා දත්තය:"
+            l2 = "🟠 2. ISM Services Employment:" if lang == "English" else "🟠 2. ISM සේවා අංශයේ රැකියා:"
+            l3 = "🟠 3. JOLTs Job Openings:" if lang == "English" else "🟠 3. JOLTs රැකියා පුරප්පාඩු:"
+            l4 = "🟠 4. Initial Jobless Claims:" if lang == "English" else "🟠 4. සතිපතා රැකියා විරහිත දත්තය:"
+            l5 = "🟠 5. Challenger Job Cuts:" if lang == "English" else "🟠 5. ආයතනික රැකියා කප්පාදුව:"
 
             adp_input = st.selectbox(l1, opt_adp, index=get_idx(major_news, "adp", opt_adp), help=tt_adp)
             ism_services = st.selectbox(l2, opt_ism, index=get_idx(major_news, "ism", opt_ism), help=tt_ism)
@@ -431,7 +438,7 @@ with tab1:
             render_market_metrics(score)
             
             inputs_dict = {"nfp_prev": nfp_previous, "nfp_fc": nfp_forecast, "adp": adp_input, "ism": ism_services, "jolts": jolts, "jobless": jobless, "chal": challenger}
-            render_save_button("NFP (Non-Farm Payrolls)", score, direction, inputs_dict)
+            render_save_button(major_news, score, direction, inputs_dict)
 
             st.markdown("<hr style='border: none; border-top: 1px solid rgba(255, 255, 255, 0.15); margin: 25px 0;'/>", unsafe_allow_html=True)
 
@@ -468,14 +475,14 @@ with tab1:
 
             st.markdown(f'''<div style="background-color: rgba(255, 255, 255, 0.03); border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 10px; padding: 15px;"><div style="font-size: 14px; color: #a0a0a0; margin-bottom: 15px; display: flex; align-items: center; gap: 8px;">🤖 <b>AI Advanced Forecast Radar</b></div><div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;"><div style="text-align: left;"><div style="font-size: 11px; color: gray; text-transform: uppercase;">{p_lbl}</div><div style="font-size: 22px; font-weight: bold; color: #a0a0a0;">{nfp_previous}k</div></div><div style="text-align: center;"><div style="font-size: 11px; color: gray; text-transform: uppercase;">{f_lbl}</div><div style="font-size: 22px; font-weight: bold; color: white;">{nfp_forecast}k</div></div><div style="text-align: right;"><div style="font-size: 11px; color: gray; text-transform: uppercase;">{r_lbl}</div><div style="font-size: 22px; font-weight: bold; color: {dev_color};">{lower_bound:.0f}k - {upper_bound:.0f}k</div></div></div><div style="background: rgba(0,0,0,0.3); padding: 10px; border-radius: 5px;"><div style="font-size: 14px; color: {dev_color}; font-weight: bold; text-align: center; margin-bottom: 5px;">{dev_signal}</div><div style="font-size: 12px; color: #d0d0d0; text-align: center; line-height: 1.4;">{dev_desc}</div></div></div>''', unsafe_allow_html=True)
 
-    # ----------------- 3. CORE PCE CALCULATOR -----------------
-    elif major_news == "Core PCE Price Index":
-        st.header("🛒 Core PCE Leading Data Calculator" if lang == "English" else "🛒 Core PCE දත්ත කැල්කියුලේටරය")
+    # ----------------- 3. CORE PCE CALCULATOR (PURPLE 🟣) -----------------
+    elif major_news.startswith("🟣 Core"):
+        st.header("🟣 🛒 Core PCE Leading Data Calculator" if lang == "English" else "🟣 🛒 Core PCE දත්ත කැල්කියුලේටරය")
         col_left, col_mid, col_right = st.columns([20, 1, 30])
-        opt_cpi = ["Hotter than Expected", "Neutral", "Cooler than Expected"]
-        opt_ppi = ["Hotter than Expected", "Neutral", "Cooler than Expected"]
-        opt_hr = ["Rising Faster", "Stable", "Cooling Down"]
-        opt_ret = ["Strong (High Spending)", "Neutral", "Weak (Low Spending)"]
+        opt_cpi = ["අපේක්ෂිත අගයට වඩා වැඩි", "Neutral", "අපේක්ෂිත අගයට වඩා අඩු"] if lang == "සිංහල" else ["Hotter than Expected", "Neutral", "Cooler than Expected"]
+        opt_ppi = ["අපේක්ෂිත අගයට වඩා වැඩි", "Neutral", "අපේක්ෂිත අගයට වඩා අඩු"] if lang == "සිංහල" else ["Hotter than Expected", "Neutral", "Cooler than Expected"]
+        opt_hr = ["ඉතා වේගයෙන් වැඩිවේ", "ස්ථාවරයි", "පහළ යමින් පවතී"] if lang == "සිංහල" else ["Rising Faster", "Stable", "Cooling Down"]
+        opt_ret = ["ප්‍රබලයි (වැඩි පාරිභෝගික වියදම්)", "Neutral", "දුර්වලයි (අඩු පාරිභෝගික වියදම්)"] if lang == "සිංහල" else ["Strong (High Spending)", "Neutral", "Weak (Low Spending)"]
 
         tt_pce_prev = "Use 'Core PCE Price Index m/m' from Forex Factory. Previous is the actual figure from the last month." if lang == "English" else "Forex Factory හි 'Core PCE Price Index m/m' (මාසික අගය) භාවිතා කරන්න. Previous යනු පසුගිය මාසයේ සැබෑ අගයයි."
         tt_pce_fc = "Enter the Market Forecast for 'Core PCE m/m'." if lang == "English" else "Forex Factory හි 'Core PCE m/m' සඳහා වෙළඳපොළ බලාපොරොත්තු වන Forecast අගය මෙහි යොදන්න."
@@ -488,15 +495,15 @@ with tab1:
             st.subheader(sub_report_txt)
             col_prev, col_fc = st.columns(2)
             with col_prev:
-                pce_previous = st.number_input(f"{prev_txt} (%):", value=get_num_val(major_news, "pce_prev", 0.3), step=0.1, format="%.1f", help=tt_pce_prev)
+                pce_previous = st.number_input(f"🟣 📉 {prev_txt} (%):", value=get_num_val(major_news, "pce_prev", 0.3), step=0.1, format="%.1f", help=tt_pce_prev)
             with col_fc:
-                pce_forecast = st.number_input(f"{fc_txt} (%):", value=get_num_val(major_news, "pce_fc", 0.2), step=0.1, format="%.1f", help=tt_pce_fc)
+                pce_forecast = st.number_input(f"🟣 📊 {fc_txt} (%):", value=get_num_val(major_news, "pce_fc", 0.2), step=0.1, format="%.1f", help=tt_pce_fc)
             st.markdown("<br>", unsafe_allow_html=True)
 
-            l1 = "1. Recent Core CPI Release:" if lang == "English" else "1. මෑතකදී ආපු Core CPI අගය:"
-            l2 = "2. Recent Core PPI Release:" if lang == "English" else "2. මෑතකදී ආපු Core PPI අගය:"
-            l3 = "3. Average Hourly Earnings:" if lang == "English" else "3. පැයකට ලබන සාමාන්‍ය ආදායම:"
-            l4 = "4. Retail Sales / Personal Income:" if lang == "English" else "4. සිල්ලර වෙළඳාම / පුද්ගලික ආදායම:"
+            l1 = "🟣 1. Recent Core CPI Release:" if lang == "English" else "🟣 1. මෑතකදී ආපු Core CPI අගය:"
+            l2 = "🟣 2. Recent Core PPI Release:" if lang == "English" else "🟣 2. මෑතකදී ආපු Core PPI අගය:"
+            l3 = "🟣 3. Average Hourly Earnings:" if lang == "English" else "🟣 3. පැයකට ලබන සාමාන්‍ය ආදායම:"
+            l4 = "🟣 4. Retail Sales / Personal Income:" if lang == "English" else "🟣 4. සිල්ලර වෙළඳාම / පුද්ගලික ආදායම:"
 
             cpi_input = st.selectbox(l1, opt_cpi, index=get_idx(major_news, "cpi", opt_cpi), help=tt_cpi_rc)
             ppi_input = st.selectbox(l2, opt_ppi, index=get_idx(major_news, "ppi", opt_ppi), help=tt_ppi_rc)
@@ -524,7 +531,7 @@ with tab1:
             render_market_metrics(score)
 
             inputs_dict = {"pce_prev": pce_previous, "pce_fc": pce_forecast, "cpi": cpi_input, "ppi": ppi_input, "hr": hourly_earnings, "ret": retail_sales}
-            render_save_button("Core PCE Price Index", score, direction, inputs_dict)
+            render_save_button(major_news, score, direction, inputs_dict)
 
             st.markdown("<hr style='border: none; border-top: 1px solid rgba(255, 255, 255, 0.15); margin: 25px 0;'/>", unsafe_allow_html=True)
 
@@ -550,7 +557,7 @@ with tab1:
             else:
                 dev_color = "#FFC107"
                 dev_signal = "⚖️ In-line with Consensus (Neutral)"
-                dev_desc = "Inflation figures are aligned with market expectations. Anticipate consolidation or range-bound trading behavior." if lang == "English" else "දත්තයන් වෙළඳපොළ බලාපොරොත්තු වූ මට්ටමේම පවතී. Market එක එකම සීමාවක (Range) ගමන් කළ හැක."
+                dev_desc = "Inflation figures are aligned with market expectations. Anticipate consolidation or range-bound trading behavior." if lang == "English" else "දත්තයන්වෙළඳපොළ බලාපොරොත්තු වූ මට්ටමේම පවතී. Market එක එකම සීමාවක (Range) ගමන් කළ හැක."
 
             lower_bound = exp_value - 0.05
             upper_bound = exp_value + 0.05
@@ -561,15 +568,15 @@ with tab1:
 
             st.markdown(f'''<div style="background-color: rgba(255, 255, 255, 0.03); border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 10px; padding: 15px;"><div style="font-size: 14px; color: #a0a0a0; margin-bottom: 15px; display: flex; align-items: center; gap: 8px;">🤖 <b>AI Advanced Forecast Radar</b></div><div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;"><div style="text-align: left;"><div style="font-size: 11px; color: gray; text-transform: uppercase;">{p_lbl}</div><div style="font-size: 22px; font-weight: bold; color: #a0a0a0;">{pce_previous:.1f}%</div></div><div style="text-align: center;"><div style="font-size: 11px; color: gray; text-transform: uppercase;">{f_lbl}</div><div style="font-size: 22px; font-weight: bold; color: white;">{pce_forecast:.1f}%</div></div><div style="text-align: right;"><div style="font-size: 11px; color: gray; text-transform: uppercase;">{r_lbl}</div><div style="font-size: 22px; font-weight: bold; color: {dev_color};">{lower_bound:.2f}% - {upper_bound:.2f}%</div></div></div><div style="background: rgba(0,0,0,0.3); padding: 10px; border-radius: 5px;"><div style="font-size: 14px; color: {dev_color}; font-weight: bold; text-align: center; margin-bottom: 5px;">{dev_signal}</div><div style="font-size: 12px; color: #d0d0d0; text-align: center; line-height: 1.4;">{dev_desc}</div></div></div>''', unsafe_allow_html=True)
 
-    # ----------------- 4. ADVANCE GDP CALCULATOR -----------------
-    elif major_news == "Advance GDP":
-        st.header("🏭 Advance GDP Leading Data Calculator" if lang == "English" else "🏭 Advance GDP දත්ත කැල්කියුලේටරය")
+    # ----------------- 4. ADVANCE GDP CALCULATOR (BLUE 🔵) -----------------
+    elif major_news.startswith("🔵 Advance"):
+        st.header("🔵 🏭 Advance GDP Leading Data Calculator" if lang == "English" else "🔵 🏭 Advance GDP දත්ත කැල්කියුලේටරය")
         col_left, col_mid, col_right = st.columns([20, 1, 30])
-        opt_atl = ["Tracking High (>2.5%)", "Neutral", "Tracking Low (<1.0%)"]
-        opt_ret = ["Strongly Positive", "Neutral", "Negative"]
-        opt_trade = ["Deficit Shrinking (Good)", "Neutral", "Deficit Widening (Bad)"]
-        opt_pmi = ["Expanding (>50)", "Neutral (~50)", "Contracting (<50)"]
-        opt_dur = ["Rising", "Neutral", "Falling"]
+        opt_atl = ["ඉහළ අගයක් ගනී (>2.5%)", "Neutral", "පහළ අගයක් ගනී (<1.0%)"] if lang == "සිංහල" else ["Tracking High (>2.5%)", "Neutral", "Tracking Low (<1.0%)"]
+        opt_ret = ["ප්‍රබල ධනාත්මක එකක්", "Neutral", "සෘණාත්මක එකක්"] if lang == "සිංහල" else ["Strongly Positive", "Neutral", "Negative"]
+        opt_trade = ["හිඟය අඩු වෙනවා (Good)", "Neutral", "හිඟය වැඩි වෙනවා (Bad)"] if lang == "සිංහල" else ["Deficit Shrinking (Good)", "Neutral", "Deficit Widening (Bad)"]
+        opt_pmi = ["වර්ධනය වේ (>50)", "Neutral (~50)", "අඩු වේ (<50)"] if lang == "සිංහල" else ["Expanding (>50)", "Neutral (~50)", "Contracting (<50)"]
+        opt_dur = ["ඉහළ යනවා", "සාමාන්‍යයි", "පහළ යනවා"] if lang == "සිංහල" else ["Rising", "Neutral", "Falling"]
 
         tt_gdp_prev = "Use 'Advance GDP q/q' from Forex Factory. Previous is the final figure from the last quarter." if lang == "English" else "Forex Factory හි 'Advance GDP q/q' (කාර්තුමය අගය) භාවිතා කරන්න. Previous යනු පසුගිය කාර්තුවේ අවසන් අගයයි."
         tt_gdp_fc = "Enter the Market Forecast for 'Advance GDP q/q'." if lang == "English" else "Forex Factory හි 'Advance GDP q/q' සඳහා වෙළඳපොළ බලාපොරොත්තු වන Forecast අගය මෙහි යොදන්න."
@@ -583,16 +590,16 @@ with tab1:
             st.subheader(sub_report_txt)
             col_prev, col_fc = st.columns(2)
             with col_prev:
-                gdp_previous = st.number_input(f"{prev_txt} (%):", value=get_num_val(major_news, "gdp_prev", 2.1), step=0.1, format="%.1f", help=tt_gdp_prev)
+                gdp_previous = st.number_input(f"🔵 📉 {prev_txt} (%):", value=get_num_val(major_news, "gdp_prev", 2.1), step=0.1, format="%.1f", help=tt_gdp_prev)
             with col_fc:
-                gdp_forecast = st.number_input(f"{fc_txt} (%):", value=get_num_val(major_news, "gdp_fc", 1.8), step=0.1, format="%.1f", help=tt_gdp_fc)
+                gdp_forecast = st.number_input(f"🔵 📊 {fc_txt} (%):", value=get_num_val(major_news, "gdp_fc", 1.8), step=0.1, format="%.1f", help=tt_gdp_fc)
             st.markdown("<br>", unsafe_allow_html=True)
 
-            l1 = "1. Atlanta Fed GDPNow Tracker:" if lang == "English" else "1. Atlanta Fed GDPNow අගය:"
-            l2 = "2. Retail Sales (Quarterly Average):" if lang == "English" else "2. සිල්ලර වෙළඳාම (කාර්තුමය):"
-            l3 = "3. Trade Balance (Net Exports):" if lang == "English" else "3. වෙළඳ ශේෂය (Trade Balance):"
-            l4 = "4. ISM Composite PMI:" if lang == "English" else "4. ISM Composite PMI අගය:"
-            l5 = "5. Durable Goods Orders:" if lang == "English" else "5. කල්පවතින භාණ්ඩ ඇණවුම්:"
+            l1 = "🔵 1. Atlanta Fed GDPNow Tracker:" if lang == "English" else "🔵 1. Atlanta Fed GDPNow අගය:"
+            l2 = "🔵 2. Retail Sales (Quarterly Average):" if lang == "English" else "🔵 2. සිල්ලර වෙළඳාම (කාර්තුමය):"
+            l3 = "🔵 3. Trade Balance (Net Exports):" if lang == "English" else "🔵 3. වෙළඳ ශේෂය (Trade Balance):"
+            l4 = "🔵 4. ISM Composite PMI:" if lang == "English" else "🔵 4. ISM Composite PMI අගය:"
+            l5 = "🔵 5. Durable Goods Orders:" if lang == "English" else "🔵 5. කල්පවතින භාණ්ඩ ඇණවුම්:"
 
             atlanta_fed = st.selectbox(l1, opt_atl, index=get_idx(major_news, "atl", opt_atl), help=tt_atl)
             retail_input = st.selectbox(l2, opt_ret, index=get_idx(major_news, "ret", opt_ret), help=tt_ret_q)
@@ -623,7 +630,7 @@ with tab1:
             render_market_metrics(score)
 
             inputs_dict = {"gdp_prev": gdp_previous, "gdp_fc": gdp_forecast, "atl": atlanta_fed, "ret": retail_input, "trade": trade_balance, "pmi": pmi_input, "dur": durable_goods}
-            render_save_button("Advance GDP", score, direction, inputs_dict)
+            render_save_button(major_news, score, direction, inputs_dict)
 
             st.markdown("<hr style='border: none; border-top: 1px solid rgba(255, 255, 255, 0.15); margin: 25px 0;'/>", unsafe_allow_html=True)
 
@@ -660,15 +667,15 @@ with tab1:
 
             st.markdown(f'''<div style="background-color: rgba(255, 255, 255, 0.03); border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 10px; padding: 15px;"><div style="font-size: 14px; color: #a0a0a0; margin-bottom: 15px; display: flex; align-items: center; gap: 8px;">🤖 <b>AI Advanced Forecast Radar</b></div><div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;"><div style="text-align: left;"><div style="font-size: 11px; color: gray; text-transform: uppercase;">{p_lbl}</div><div style="font-size: 22px; font-weight: bold; color: #a0a0a0;">{gdp_previous:.1f}%</div></div><div style="text-align: center;"><div style="font-size: 11px; color: gray; text-transform: uppercase;">{f_lbl}</div><div style="font-size: 22px; font-weight: bold; color: white;">{gdp_forecast:.1f}%</div></div><div style="text-align: right;"><div style="font-size: 11px; color: gray; text-transform: uppercase;">{r_lbl}</div><div style="font-size: 22px; font-weight: bold; color: {dev_color};">{lower_bound:.2f}% - {upper_bound:.2f}%</div></div></div><div style="background: rgba(0,0,0,0.3); padding: 10px; border-radius: 5px;"><div style="font-size: 14px; color: {dev_color}; font-weight: bold; text-align: center; margin-bottom: 5px;">{dev_signal}</div><div style="font-size: 12px; color: #d0d0d0; text-align: center; line-height: 1.4;">{dev_desc}</div></div></div>''', unsafe_allow_html=True)
 
-    # ----------------- 5. FOMC RATE DECISION CALCULATOR -----------------
-    elif major_news == "FOMC Rate Decision":
-        st.header("🦅 FOMC Rate Decision & Statement" if lang == "English" else "🦅 FOMC පොලී අනුපාත තීරණය")
+    # ----------------- 5. FOMC RATE DECISION CALCULATOR (RED 🔴) -----------------
+    elif major_news.startswith("🔴 FOMC"):
+        st.header("🔴 🦅 FOMC Rate Decision & Statement" if lang == "English" else "🔴 🦅 FOMC පොලී අනුපාත තීරණය")
         col_left, col_mid, col_right = st.columns([20, 1, 30])
-        opt_fed = ["Pricing Hawk (Hike/Hold)", "Mixed", "Pricing Dove (Cut)"]
-        opt_inf = ["Sticky / Rising", "Neutral", "Falling Rapidly"]
-        opt_lab = ["Tight (Strong Jobs)", "Neutral", "Cooling (Weak Jobs)"]
-        opt_speak = ["Hawkish Rhetoric", "Neutral", "Dovish Rhetoric"]
-        opt_fin = ["Loose (Requires Tightening)", "Neutral", "Tight (Requires Easing)"]
+        opt_fed = ["Hawk පැත්තට බරයි (Hike/Hold)", "මිශ්‍ර තත්ත්වයක්", "Dove පැත්තට බරයි (Cut)"] if lang == "සිංහල" else ["Pricing Hawk (Hike/Hold)", "Mixed", "Pricing Dove (Cut)"]
+        opt_inf = ["ස්ථාවරයි / ඉහළ යයි", "Neutral", "වේගයෙන් පහළ වැටේ"] if lang == "සිංහල" else ["Sticky / Rising", "Neutral", "Falling Rapidly"]
+        opt_lab = ["ප්‍රබලයි (වැඩි රැකියා ප්‍රමාණයක්)", "Neutral", "දුර්වලයි (අඩු රැකියා ප්‍රමාණයක්)"] if lang == "සිංහල" else ["Tight (Strong Jobs)", "Neutral", "Cooling (Weak Jobs)"]
+        opt_speak = ["Hawkish දැඩි ප්‍රකාශ", "Neutral", "Dovish ලිහිල් ප්‍රකාශ"] if lang == "සිංහල" else ["Hawkish Rhetoric", "Neutral", "Dovish Rhetoric"]
+        opt_fin = ["ලිහිල් (මුදල් සැපයුම වැඩියි)", "Neutral", "තදයි (මුදල් සැපයුම අඩුයි)"] if lang == "සිංහල" else ["Loose (Requires Tightening)", "Neutral", "Tight (Requires Easing)"]
 
         tt_fomc_prev = "Use 'Federal Funds Rate' from Forex Factory. Previous is the currently existing interest rate." if lang == "English" else "Forex Factory හි 'Federal Funds Rate' අගය භාවිතා කරන්න. Previous යනු දැනට පවතින පොලී අනුපාතයයි."
         tt_fomc_fc = "Enter the Market Forecast for the 'Federal Funds Rate'." if lang == "English" else "Forex Factory හි 'Federal Funds Rate' සඳහා වෙළඳපොළ බලාපොරොත්තු වන Forecast අගය මෙහි යොදන්න."
@@ -683,16 +690,16 @@ with tab1:
             col_prev, col_fc = st.columns(2)
             with col_prev:
                 pr_txt = "📉 Previous Rate" if lang == "English" else "📉 පෙර අනුපාතය"
-                fomc_previous = st.number_input(f"{pr_txt} (%):", value=get_num_val(major_news, "fomc_prev", 5.50), step=0.25, format="%.2f", help=tt_fomc_prev)
+                fomc_previous = st.number_input(f"🔴 {pr_txt} (%):", value=get_num_val(major_news, "fomc_prev", 5.50), step=0.25, format="%.2f", help=tt_fomc_prev)
             with col_fc:
-                fomc_forecast = st.number_input(f"{fc_txt} (%):", value=get_num_val(major_news, "fomc_fc", 5.25), step=0.25, format="%.2f", help=tt_fomc_fc)
+                fomc_forecast = st.number_input(f"🔴 📊 {fc_txt} (%):", value=get_num_val(major_news, "fomc_fc", 5.25), step=0.25, format="%.2f", help=tt_fomc_fc)
             st.markdown("<br>", unsafe_allow_html=True)
 
-            l1 = "1. CME FedWatch Probability:" if lang == "English" else "1. CME FedWatch අනුපාතය:"
-            l2 = "2. Recent Core PCE/CPI Trend:" if lang == "English" else "2. මෑතකාලීන Core PCE/CPI ගමන:"
-            l3 = "3. Recent Labor Market (NFP/JOLTs):" if lang == "English" else "3. රැකියා වෙළඳපොළේ තත්ත්වය:"
-            l4 = "4. Recent Fedspeak / Dot Plot:" if lang == "English" else "4. Fed නිලධාරීන්ගේ ප්‍රකාශ/Dot Plot:"
-            l5 = "5. Financial Conditions Index:" if lang == "English" else "5. මූල්‍ය තත්ත්ව දර්ශකය (FCI):"
+            l1 = "🔴 1. CME FedWatch Probability:" if lang == "English" else "🔴 1. CME FedWatch අනුපාතය:"
+            l2 = "🔴 2. Recent Core PCE/CPI Trend:" if lang == "English" else "🔴 2. මෑතකාලීන Core PCE/CPI ගමන:"
+            l3 = "🔴 3. Recent Labor Market (NFP/JOLTs):" if lang == "English" else "🔴 3. රැකියා වෙළඳපොළේ තත්ත්වය:"
+            l4 = "🔴 4. Recent Fedspeak / Dot Plot:" if lang == "English" else "🔴 4. Fed නිලධාරීන්ගේ ප්‍රකාශ/Dot Plot:"
+            l5 = "🔴 5. Financial Conditions Index:" if lang == "English" else "🔴 5. මූල්‍ය තත්ත්ව දර්ශකය (FCI):"
 
             fedwatch = st.selectbox(l1, opt_fed, index=get_idx(major_news, "fed", opt_fed), help=tt_fed)
             inflation = st.selectbox(l2, opt_inf, index=get_idx(major_news, "inf", opt_inf), help=tt_inf)
@@ -723,7 +730,7 @@ with tab1:
             render_market_metrics(score, is_fomc=True)
 
             inputs_dict = {"fomc_prev": fomc_previous, "fomc_fc": fomc_forecast, "fed": fedwatch, "inf": inflation, "lab": labor, "speak": fedspeak, "fin": fin_conditions}
-            render_save_button("FOMC Rate Decision", score, direction, inputs_dict)
+            render_save_button(major_news, score, direction, inputs_dict)
 
             st.markdown("<hr style='border: none; border-top: 1px solid rgba(255, 255, 255, 0.15); margin: 25px 0;'/>", unsafe_allow_html=True)
 
@@ -847,7 +854,7 @@ with tab3:
             * **Result:** Jerome Powell delivered a dovish press conference, and the Dot Plot showed 3 rate cuts for 2024. DXY dumped aggressively, sending XAU/USD (Gold) and US Indices (NASDAQ/US30) to all-time highs.
             """)
     else:
-        st.header("📚 අතීත සිදුවීම් අධ්‍යයනය")
+        st.header("📚 അතීත සිදුවීම් අධ්‍යයනය")
         st.write("අතීතයේ ආර්ථික දත්ත ඩොලරයට බලපාපු විදිය මෙතනින් අධ්‍යයනය කරන්න.")
         
         with st.expander("📌 1 වන අධ්‍යයනය: පශ්චාත්-කොවිඩ් උද්ධමන කම්පනය (2022 CPI)"):
@@ -875,7 +882,6 @@ with tab4:
         st.header("📅 සජීවී දින දර්ශනය සහ මැක්‍රෝ වර්ණ සිතියම")
         st.write("පහත දැක්වෙන වර්ණ සිතියම (Color Map) උපකාර කරගෙන සජීවී දින දර්ශනය තුළ ඇති අදාළ පෙරගමන් දත්ත (Leading Indicators) පහසුවෙන් සොයාගන්න.")
     
-    # --- INTERACTIVE VISUAL GUIDE MAP (Completely cleaned for Streamlit Parser safety) ---
     st.markdown("#### 🎨 🗺️ Bull Matrix Macro Color Map" if lang == "English" else "#### 🎨 🗺️ Bull Matrix මැක්‍රෝ වර්ණ සිතියම")
 
     map_c1, map_c2, map_c3, map_c4, map_c5 = st.columns(5)
