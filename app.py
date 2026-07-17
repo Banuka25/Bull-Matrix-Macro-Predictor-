@@ -129,16 +129,14 @@ def get_num_val(event_name, input_key, default_val):
         return st.session_state['loaded_data']['Inputs'].get(input_key, default_val)
     return default_val
 
-# --- BULLETPROOF API Fetch Function ---
-@st.cache_data(ttl=3600)
+# --- BULLETPROOF API Fetch Function (Cache Removed for Live Testing) ---
 def fetch_macro_data_from_fmp(event_type):
     try:
         api_key = st.secrets.get("FMP_API_KEY")
         if not api_key: return "NO_KEY", "API Key is missing in Secrets."
         
         today = datetime.datetime.now()
-        # සෙවුම් පරාසය දින 120ක් දක්වා වැඩි කළා (පස්සට 90යි, ඉස්සරහට 30යි)
-        start = (today - datetime.timedelta(days=90)).strftime("%Y-%m-%d")
+        start = (today - datetime.timedelta(days=120)).strftime("%Y-%m-%d")
         end = (today + datetime.timedelta(days=30)).strftime("%Y-%m-%d")
         
         url = f"https://financialmodelingprep.com/api/v3/economic_calendar?from={start}&to={end}&apikey={api_key}"
@@ -161,10 +159,13 @@ def fetch_macro_data_from_fmp(event_type):
                 elif event_type == "Advance GDP": keywords = ["gdp", "gross domestic product"]
                 elif event_type == "FOMC Rate Decision": keywords = ["fed", "fomc", "interest rate", "rate decision"]
 
+                matches = []
                 for item in data:
                     country = str(item.get("country", "")).upper()
-                    # රට US හෝ United States ලෙස තිබුණත් අඳුරගන්න පුළුවන් විදියට හැදුවා
-                    if country in ["US", "UNITED STATES", "USA"]:
+                    currency = str(item.get("currency", "")).upper()
+                    
+                    # More robust matching: Check Country OR Currency
+                    if country in ["US", "UNITED STATES", "USA"] or currency == "USD":
                         event_name = str(item.get("event", "")).lower()
                         for kw in keywords:
                             if kw in event_name:
@@ -172,8 +173,14 @@ def fetch_macro_data_from_fmp(event_type):
                                 fc = item.get("estimate")
                                 if prev is not None and fc is not None:
                                     if "payroll" in event_name and float(prev) > 500:
-                                        return float(prev)/1000, float(fc)/1000
-                                    return float(prev), float(fc)
+                                        matches.append((float(prev)/1000, float(fc)/1000))
+                                    else:
+                                        matches.append((float(prev), float(fc)))
+                
+                # If matches found, return the most recent one (last in the list)
+                if matches:
+                    return matches[-1]
+                    
     except Exception as e:
         return "CODE_ERROR", str(e)
         
@@ -234,7 +241,7 @@ with tab1:
         elif api_prev is not None and api_fc is not None:
             st.sidebar.success("✅ Live Data Synced!")
         else:
-            st.sidebar.info("⏳ No upcoming data found for this event in the current 120-day window.")
+            st.sidebar.info("⏳ No upcoming data found for this event in the current window.")
 
     # --- Bull Matrix Personal Branding Footer ---
     st.sidebar.markdown("<br><br><br>", unsafe_allow_html=True)
