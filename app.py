@@ -5,6 +5,7 @@ import datetime
 import pytz
 import base64
 import os
+import streamlit.components.v1 as components
 
 st.set_page_config(page_title="Macro DXY Predictor Pro", page_icon="📈", layout="wide")
 
@@ -194,8 +195,9 @@ else:
 
 st.markdown("---")
 
-tab_names = ["🔮 Live Predictor", "📓 Trading Journal", "📚 Historical Case Studies"] if lang == "English" else ["🔮 සජීවී පුරෝකථනය", "📓 ට්‍රේඩින් ජර්නල් එක", "📚 අතීත සිදුවීම් අධ්‍යයනය"]
-tab1, tab2, tab3 = st.tabs(tab_names)
+# Added 4th Tab for Live Calendar
+tab_names = ["🔮 Live Predictor", "📓 Trading Journal", "📚 Historical Case Studies", "📅 Live Calendar"] if lang == "English" else ["🔮 සජීවී පුරෝකථනය", "📓 ට්‍රේඩින් ජර්නල් එක", "📚 අතීත සිදුවීම් අධ්‍යයනය", "📅 සජීවී දින දර්ශනය"]
+tab1, tab2, tab3, tab4 = st.tabs(tab_names)
 
 with tab1:
     st.sidebar.header("📅 Select Major News Event" if lang == "English" else "📅 ප්‍රධාන නිවුස් එක තෝරන්න")
@@ -976,12 +978,11 @@ with tab2:
                 
         # --- UI Balanced Action Buttons (Download & Clear) ---
         st.markdown("<br>", unsafe_allow_html=True)
-        # Using the exact same ratio as the headers so buttons align perfectly under columns
         dl_col, space1, space2, space3, clr_col = st.columns([2, 3, 2, 3, 1.2])
         
         with dl_col:
             df = pd.DataFrame(st.session_state['journal'])
-            df_export = df.drop(columns=['Inputs']) # Exclude raw dictionary from CSV for cleaner look
+            df_export = df.drop(columns=['Inputs']) 
             csv = df_export.to_csv(index=False).encode('utf-8')
             dl_txt = "📥 Download CSV" if lang == "English" else "📥 Download CSV" 
             st.download_button(label=dl_txt, data=csv, file_name='macro_journal.csv', mime='text/csv')
@@ -1032,3 +1033,35 @@ with tab3:
             * **පුරෝකථන මෙවලමේ ලකුණ:** 35% Bearish (DXY).
             * **ප්‍රතිඵලය:** ජෙරොම් පවෙල් (Jerome Powell) විසින් Dovish මාධ්‍ය සාකච්ඡාවක් ලබා දුන් අතර, Dot Plot මගින් 2024 වසර සඳහා පොලී අනුපාත කප්පාදු 3ක් පෙන්වා දෙන ලදී. මේ නිසා DXY දර්ශකය වේගයෙන් කඩා වැටුණු අතර, XAU/USD (රන්) සහ US Indices (NASDAQ/US30) සර්වකාලීන උපරිම අගයන් (All-time highs) දක්වා ඉහළ ගියේය.
             """)
+
+# --- NEW TAB: LIVE ECONOMIC CALENDAR ---
+with tab4:
+    if lang == "English":
+        st.header("📅 Live Economic Calendar")
+        st.write("View upcoming and historical macroeconomic events directly from TradingView. You can filter by date to find past leading data.")
+    else:
+        st.header("📅 සජීවී ආර්ථික දින දර්ශනය")
+        st.write("TradingView වෙතින් සජීවීව සහ අතීත ආර්ථික දත්ත මෙතනින් නරඹන්න. දින දර්ශනය හරහා පරණ දිනවලට ගොස් අවශ්‍ය Leading Data සොයාගත හැක.")
+    
+    st.markdown("<br>", unsafe_allow_html=True)
+    
+    # Embedding the Official TradingView Economic Calendar Widget
+    tv_widget = """
+    <!-- TradingView Widget BEGIN -->
+    <div class="tradingview-widget-container">
+      <div class="tradingview-widget-container__widget"></div>
+      <script type="text/javascript" src="https://s3.tradingview.com/external-embedding/embed-widget-events.js" async>
+      {
+      "colorTheme": "dark",
+      "isTransparent": true,
+      "width": "100%",
+      "height": "800",
+      "locale": "en",
+      "importanceFilter": "0,1",
+      "countryFilter": "us"
+    }
+      </script>
+    </div>
+    <!-- TradingView Widget END -->
+    """
+    components.html(tv_widget, height=800, scrolling=True)
