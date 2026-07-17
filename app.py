@@ -129,15 +129,17 @@ def get_num_val(event_name, input_key, default_val):
         return st.session_state['loaded_data']['Inputs'].get(input_key, default_val)
     return default_val
 
-# --- BULLETPROOF API Fetch Function (Cache Removed for Live Testing) ---
+# --- UPGRADED API Fetch Function (Safe Free-Tier Limits) ---
+@st.cache_data(ttl=3600)
 def fetch_macro_data_from_fmp(event_type):
     try:
         api_key = st.secrets.get("FMP_API_KEY")
         if not api_key: return "NO_KEY", "API Key is missing in Secrets."
         
         today = datetime.datetime.now()
-        start = (today - datetime.timedelta(days=120)).strftime("%Y-%m-%d")
-        end = (today + datetime.timedelta(days=30)).strftime("%Y-%m-%d")
+        # දින පරාසය 45කට අඩු කළා (Free API වලට ගැලපෙන සේ)
+        start = (today - datetime.timedelta(days=35)).strftime("%Y-%m-%d")
+        end = (today + datetime.timedelta(days=10)).strftime("%Y-%m-%d")
         
         url = f"https://financialmodelingprep.com/api/v3/economic_calendar?from={start}&to={end}&apikey={api_key}"
         res = requests.get(url)
@@ -150,7 +152,7 @@ def fetch_macro_data_from_fmp(event_type):
                 
             if isinstance(data, list):
                 if len(data) == 0:
-                    return "API_EMPTY", "දත්ත ගබඩාව හිස්ව පවතී (Free Tier Restriction)"
+                    return "API_EMPTY", "දත්ත ගබඩාව හිස්ව පවතී (Free Tier Range Limit)"
 
                 keywords = []
                 if event_type == "CPI (Consumer Price Index)": keywords = ["cpi", "consumer price", "inflation"]
@@ -164,22 +166,31 @@ def fetch_macro_data_from_fmp(event_type):
                     country = str(item.get("country", "")).upper()
                     currency = str(item.get("currency", "")).upper()
                     
-                    # More robust matching: Check Country OR Currency
                     if country in ["US", "UNITED STATES", "USA"] or currency == "USD":
                         event_name = str(item.get("event", "")).lower()
                         for kw in keywords:
                             if kw in event_name:
                                 prev = item.get("previous")
                                 fc = item.get("estimate")
-                                if prev is not None and fc is not None:
-                                    if "payroll" in event_name and float(prev) > 500:
-                                        matches.append((float(prev)/1000, float(fc)/1000))
-                                    else:
-                                        matches.append((float(prev), float(fc)))
+                                actual = item.get("actual")
+
+                                # Aggressive Fallback: අගයන් මිස් වෙලා නම් කොහෙන් හරි අගයක් අදිනවා
+                                if prev is None: prev = actual
+                                if fc is None: fc = prev
+
+                                if prev is not None:
+                                    try:
+                                        p_val = float(prev)
+                                        f_val = float(fc)
+                                        if "payroll" in event_name and p_val > 500:
+                                            matches.append((p_val/1000, f_val/1000))
+                                        else:
+                                            matches.append((p_val, f_val))
+                                    except Exception:
+                                        pass
                 
-                # If matches found, return the most recent one (last in the list)
                 if matches:
-                    return matches[-1]
+                    return matches[-1] # අලුත්ම දත්තය ලබා දෙයි
                     
     except Exception as e:
         return "CODE_ERROR", str(e)
@@ -241,7 +252,7 @@ with tab1:
         elif api_prev is not None and api_fc is not None:
             st.sidebar.success("✅ Live Data Synced!")
         else:
-            st.sidebar.info("⏳ No upcoming data found for this event in the current window.")
+            st.sidebar.info("⏳ No upcoming data found for this event in the current 45-day window.")
 
     # --- Bull Matrix Personal Branding Footer ---
     st.sidebar.markdown("<br><br><br>", unsafe_allow_html=True)
