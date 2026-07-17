@@ -191,7 +191,8 @@ else:
 
 st.markdown("---")
 
-tab_names = ["🔮 Live Predictor", "📓 Trading Journal", "📚 Historical Case Studies", "📅 Live Calendar"] if lang == "English" else ["🔮 සජීවී පුරෝකථනය", "📓 ට්‍රේඩින් ජර්නල් එක", "📚 අතීත සිදුවීම් අධ්‍යයනය", "📅 සජීවී දින දර්ශනය"]
+# Reordered Tabs
+tab_names = ["🔮 Live Predictor", "📅 Live Calendar", "📓 Trading Journal", "📚 Historical Case Studies"] if lang == "English" else ["🔮 සජීවී පුරෝකථනය", "📅 සජීවී දින දර්ශනය", "📓 ට්‍රේඩින් ජර්නල් එක", "📚 අතීත සිදුවීම් අධ්‍යයනය"]
 tab1, tab2, tab3, tab4 = st.tabs(tab_names)
 
 with tab1:
@@ -765,114 +766,8 @@ with tab1:
 
             st.markdown(f'''<div style="background-color: rgba(255, 255, 255, 0.03); border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 10px; padding: 15px;"><div style="font-size: 14px; color: #a0a0a0; margin-bottom: 15px; display: flex; align-items: center; gap: 8px;">🤖 <b>AI Advanced Forecast Radar</b></div><div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;"><div style="text-align: left;"><div style="font-size: 11px; color: gray; text-transform: uppercase;">{p_lbl}</div><div style="font-size: 22px; font-weight: bold; color: #a0a0a0;">{fomc_previous:.2f}%</div></div><div style="text-align: center;"><div style="font-size: 11px; color: gray; text-transform: uppercase;">{f_lbl}</div><div style="font-size: 22px; font-weight: bold; color: white;">{fomc_forecast:.2f}%</div></div><div style="text-align: right;"><div style="font-size: 11px; color: gray; text-transform: uppercase;">{r_lbl}</div><div style="font-size: 22px; font-weight: bold; color: {dev_color};">{lower_bound:.2f}% - {upper_bound:.2f}%</div></div></div><div style="background: rgba(0,0,0,0.3); padding: 10px; border-radius: 5px;"><div style="font-size: 14px; color: {dev_color}; font-weight: bold; text-align: center; margin-bottom: 5px;">{dev_signal}</div><div style="font-size: 12px; color: #d0d0d0; text-align: center; line-height: 1.4;">{dev_desc}</div></div></div>''', unsafe_allow_html=True)
 
-# --- NEW TAB: TRADING JOURNAL ---
-with tab2:
-    st.header("📓 My Trading Journal" if lang == "English" else "📓 මගේ ට්‍රේඩින් ජර්නල් එක")
-    st.write("Review your saved predictions or load them back into the calculator." if lang == "English" else "ඔබ සේව් කරපු දත්ත මෙතනින් බලන්න හෝ නැවත ඇප් එකට Load කරන්න.")
-    
-    if len(st.session_state['journal']) == 0:
-        st.info("Your journal is empty. Go to the 'Live Predictor' tab, analyze a news event, and click 'Save to Journal'!" if lang == "English" else "ජර්නල් එක හිස්. Live Predictor එකෙන් ඩේටා විශ්ලේෂණය කරලා 'Save to Journal' ඔබන්න!")
-    else:
-        st.markdown("---")
-        h1, h2, h3, h4, h5 = st.columns([2, 3, 2, 3, 1.2]) 
-        h1.markdown("**Date & Time**" if lang == "English" else "**දිනය සහ වේලාව**")
-        h2.markdown("**News Event**" if lang == "English" else "**නිවුස් එක**")
-        h3.markdown("**DXY Score**" if lang == "English" else "**DXY ලකුණ**")
-        h4.markdown("**Prediction**" if lang == "English" else "**පුරෝකථනය**")
-        h5.markdown("**Actions**" if lang == "English" else "**ක්‍රියාමාර්ග**")
-        st.markdown("---")
-        
-        for i, entry in enumerate(st.session_state['journal']):
-            c1, c2, c3, c4, c5 = st.columns([2, 3, 2, 3, 1.2])
-            
-            row_style = "font-size: 14px; color: #d0d0d0; padding-top: 5px;"
-            c1.markdown(f"<div style='{row_style}'>{entry['Date & Time']}</div>", unsafe_allow_html=True)
-            c2.markdown(f"<div style='{row_style}'>{entry['News Event']}</div>", unsafe_allow_html=True)
-            c3.markdown(f"<div style='{row_style}'>{entry['DXY Score']}</div>", unsafe_allow_html=True)
-            
-            pred = entry["Predicted Direction"]
-            if "BULLISH" in pred: color, svg = "#00ffcc", svg_bullish
-            elif "BEARISH" in pred: color, svg = "#ff4b4b", svg_bearish
-            else: color, svg = "#FFC107", svg_ranging
-                
-            svg_small = svg.replace('width="24"', 'width="18"').replace('height="24"', 'height="18"')
-            
-            pred_html = f"""<div style="display: flex; align-items: center; gap: 8px; padding-top: 5px;"><span style="font-size: 14px; font-weight: bold; color: {color};">{pred}</span><div style="display: flex; align-items: center;">{svg_small}</div></div>"""
-            c4.markdown(pred_html, unsafe_allow_html=True)
-            
-            btn_col1, btn_col2 = c5.columns(2)
-            
-            if btn_col1.button("🔄", key=f"load_btn_{i}", help="Load this entry" if lang == "English" else "දත්ත නැවත Load කරන්න"):
-                st.session_state['loaded_data'] = entry
-                st.toast("✅ Data Loaded! Go to the 'Live Predictor' tab." if lang == "English" else "✅ දත්ත Load කළා! 'සජීවී පුරෝකථනය' ටැබ් එකට යන්න.")
-                st.rerun()
-                
-            if btn_col2.button("✖", key=f"del_btn_{i}", help="Delete this entry" if lang == "English" else "මෙම දත්තය මකා දමන්න"):
-                st.session_state['journal'].pop(i)
-                st.rerun()
-            
-            st.markdown("<hr style='border: none; border-top: 1px solid rgba(255, 255, 255, 0.1); margin: 12px 0;'/>", unsafe_allow_html=True)
-                
-        # --- UI Balanced Action Buttons (Download & Clear) ---
-        st.markdown("<br>", unsafe_allow_html=True)
-        dl_col, space1, space2, space3, clr_col = st.columns([2, 3, 2, 3, 1.2])
-        
-        with dl_col:
-            df = pd.DataFrame(st.session_state['journal'])
-            df_export = df.drop(columns=['Inputs']) 
-            csv = df_export.to_csv(index=False).encode('utf-8')
-            dl_txt = "📥 Download CSV" if lang == "English" else "📥 Download CSV" 
-            st.download_button(label=dl_txt, data=csv, file_name='macro_journal.csv', mime='text/csv')
-            
-        with clr_col:
-            clr_txt = "🗑️ Clear All Data" if lang == "English" else "🗑️ සියලු දත්ත මකන්න" 
-            if st.button(clr_txt, type="primary"): 
-                st.session_state['journal'] = []
-                st.session_state['loaded_data'] = None
-                st.rerun()
-
-with tab3:
-    if lang == "English":
-        st.header("📚 Historical Case Studies")
-        st.write("Review how past macroeconomic data impacted the US Dollar (DXY).")
-        
-        with st.expander("📌 Case Study 1: The Post-COVID Inflation Shock (2022 CPI)"):
-            st.write("""
-            **Scenario:** US Inflation hit 9.1% (40-year highs).
-            * **Leading Data:** PPI was surging due to supply chain issues. Energy prices (Oil) skyrocketed due to the Russia-Ukraine war. Import prices were massive.
-            * **Prediction Tool Score:** 100% Bullish (DXY).
-            * **Result:** The Fed was forced into aggressive rate hikes. DXY rallied to a 20-year high of 114.78. EUR/USD dropped below parity (1.0000). US30 and NASDAQ crashed heavily.
-            """)
-            
-        with st.expander("📌 Case Study 2: The Dovish Pivot Expectations (Late 2023 FOMC)"):
-            st.write("""
-            **Scenario:** Inflation was cooling down rapidly towards 3%.
-            * **Leading Data:** Core PCE showed consecutive drops. Jobless claims started to edge higher. Fedspeak shifted from 'hike more' to 'hold and wait'.
-            * **Prediction Tool Score:** 35% Bearish (DXY).
-            * **Result:** Jerome Powell delivered a dovish press conference, and the Dot Plot showed 3 rate cuts for 2024. DXY dumped aggressively, sending XAU/USD (Gold) and US Indices (NASDAQ/US30) to all-time highs.
-            """)
-    else:
-        st.header("📚 අතීත සිදුවීම් අධ්‍යයනය")
-        st.write("අතීතයේ ආර්ථික දත්ත ඩොලරයට බලපාපු විදිය මෙතනින් අධ්‍යයනය කරන්න.")
-        
-        with st.expander("📌 1 වන අධ්‍යයනය: පශ්චාත්-කොවිඩ් උද්ධමන කම්පනය (2022 CPI)"):
-            st.write("""
-            **තත්ත්වය:** ඇමෙරිකානු උද්ධමනය 9.1% දක්වා (වසර 40ක උපරිමයට) ඉහළ ගියේය.
-            * **පෙරගමන් දත්ත:** සැපයුම් ජාලයේ ගැටලු නිසා PPI ඉහළ යමින් තිබුණි. රුසියානු-යුක්රේන යුද්ධය නිසා බලශක්ති (ඉන්ධන) මිල ගණන් අහසට නැග තිබුණි. ආනයන මිලද විශාල ලෙස ඉහළ ගොස් තිබුණි.
-            * **පුරෝකථන මෙවලමේ ලකුණ:** 100% Bullish (DXY).
-            * **ප්‍රතිඵලය:** ෆෙඩරල් බැංකුවට (Fed) දැඩි ලෙස පොලී අනුපාත වැඩි කිරීමට සිදුවිය. DXY දර්ශකය වසර 20ක උපරිම අගය වූ 114.78 දක්වා ඉහළ ගියේය. EUR/USD අගය 1.0000 ට වඩා පහත වැටුණි. US30 සහ NASDAQ දර්ශක දැඩි ලෙස කඩා වැටුණි.
-            """)
-            
-        with st.expander("📌 2 වන අධ්‍යයනය: Dovish Pivot අපේක්ෂාවන් (2023 අගභාගයේ FOMC)"):
-            st.write("""
-            **තත්ත්වය:** උද්ධමනය 3% දක්වා වේගයෙන් පහත වැටෙමින් තිබුණි.
-            * **පෙරගමන් දත්ත:** Core PCE අඛණ්ඩව පහත වැටෙන බව පෙන්නුම් කළේය. Jobless claims (රැකියා විරහිත දත්ත) තරමත් ඉහළ යාමට පටන් ගෙන තිබුණි. Fed නිලධාරීන්ගේ ප්‍රකාශ (Fedspeak) 'තවත් පොලී වැඩි කළ යුතුයි' යන තැනින් මිදී 'දැනට ඇති, අපි බලා සිටිමු' යන තැනට මාරු වී තිබුණි.
-            * **පුරෝකථන මෙවලමේ ලකුණ:** 35% Bearish (DXY).
-            * **ප්‍රතිඵලය:** ජෙරොම් පවෙල් (Jerome Powell) විසින් Dovish මාධ්‍ය සාකච්ඡාවක් ලබා දුන් අතර, Dot Plot මගින් 2024 වසර සඳහා පොලී අනුපාත කප්පාදු 3ක් පෙන්වා දෙන ලදී. මේ නිසා DXY දර්ශකය වේගයෙන් කඩා වැටුණු අතර, XAU/USD (රන්) සහ US Indices (NASDAQ/US30) සර්වකාලීන උපරිම අගයන් (All-time highs) දක්වා ඉහළ ගියේය.
-            """)
-
 # --- NEW TAB: LIVE ECONOMIC CALENDAR WITH BULL MATRIX GUIDE MAP ---
-with tab4:
+with tab2:
     if lang == "English":
         st.header("📅 Live Economic Calendar & Macro Guide Map")
         st.write("Use the Color Map below to find the specific Leading Indicators inside the Live Calendar window.")
@@ -957,4 +852,111 @@ with tab4:
             * **CME FedWatch Probability (🔴 FOMC):** CME Group වෙබ් අඩවියේ ඇති "FedWatch Tool" හරහා ආයෝජකයන්ගේ අපේක්ෂාව බැලීම.
             * **Recent Fedspeak Rhetoric (🔴 FOMC):** Forex Factory News Feed, Bloomberg, හෝ Financial Twitter (X) හරහා Fed නිලධාරීන්ගේ කතාවල සාරාංශය කියවීම.
             * **Financial Conditions Index (🔴 FOMC):** Chicago Fed නිල වෙබ් අඩවිය හෝ TradingView හි `NFCI` චාට් එක.
+            """)
+
+# --- NEW TAB: TRADING JOURNAL ---
+with tab3:
+    st.header("📓 My Trading Journal" if lang == "English" else "📓 මගේ ට්‍රේඩින් ජර්නල් එක")
+    st.write("Review your saved predictions or load them back into the calculator." if lang == "English" else "ඔබ සේව් කරපු දත්ත මෙතනින් බලන්න හෝ නැවත ඇප් එකට Load කරන්න.")
+    
+    if len(st.session_state['journal']) == 0:
+        st.info("Your journal is empty. Go to the 'Live Predictor' tab, analyze a news event, and click 'Save to Journal'!" if lang == "English" else "ජර්නල් එක හිස්. Live Predictor එකෙන් ඩේටා විශ්ලේෂණය කරලා 'Save to Journal' ඔබන්න!")
+    else:
+        st.markdown("---")
+        h1, h2, h3, h4, h5 = st.columns([2, 3, 2, 3, 1.2]) 
+        h1.markdown("**Date & Time**" if lang == "English" else "**දිනය සහ වේලාව**")
+        h2.markdown("**News Event**" if lang == "English" else "**නිවුස් එක**")
+        h3.markdown("**DXY Score**" if lang == "English" else "**DXY ලකුණ**")
+        h4.markdown("**Prediction**" if lang == "English" else "**පුරෝකථනය**")
+        h5.markdown("**Actions**" if lang == "English" else "**ක්‍රියාමාර්ග**")
+        st.markdown("---")
+        
+        for i, entry in enumerate(st.session_state['journal']):
+            c1, c2, c3, c4, c5 = st.columns([2, 3, 2, 3, 1.2])
+            
+            row_style = "font-size: 14px; color: #d0d0d0; padding-top: 5px;"
+            c1.markdown(f"<div style='{row_style}'>{entry['Date & Time']}</div>", unsafe_allow_html=True)
+            c2.markdown(f"<div style='{row_style}'>{entry['News Event']}</div>", unsafe_allow_html=True)
+            c3.markdown(f"<div style='{row_style}'>{entry['DXY Score']}</div>", unsafe_allow_html=True)
+            
+            pred = entry["Predicted Direction"]
+            if "BULLISH" in pred: color, svg = "#00ffcc", svg_bullish
+            elif "BEARISH" in pred: color, svg = "#ff4b4b", svg_bearish
+            else: color, svg = "#FFC107", svg_ranging
+                
+            svg_small = svg.replace('width="24"', 'width="18"').replace('height="24"', 'height="18"')
+            
+            pred_html = f"""<div style="display: flex; align-items: center; gap: 8px; padding-top: 5px;"><span style="font-size: 14px; font-weight: bold; color: {color};">{pred}</span><div style="display: flex; align-items: center;">{svg_small}</div></div>"""
+            c4.markdown(pred_html, unsafe_allow_html=True)
+            
+            btn_col1, btn_col2 = c5.columns(2)
+            
+            if btn_col1.button("🔄", key=f"load_btn_{i}", help="Load this entry" if lang == "English" else "දත්ත නැවත Load කරන්න"):
+                st.session_state['loaded_data'] = entry
+                st.toast("✅ Data Loaded! Go to the 'Live Predictor' tab." if lang == "English" else "✅ දත්ත Load කළා! 'සජීවී පුරෝකථනය' ටැබ් එකට යන්න.")
+                st.rerun()
+                
+            if btn_col2.button("✖", key=f"del_btn_{i}", help="Delete this entry" if lang == "English" else "මෙම දත්තය මකා දමන්න"):
+                st.session_state['journal'].pop(i)
+                st.rerun()
+            
+            st.markdown("<hr style='border: none; border-top: 1px solid rgba(255, 255, 255, 0.1); margin: 12px 0;'/>", unsafe_allow_html=True)
+                
+        # --- UI Balanced Action Buttons (Download & Clear) ---
+        st.markdown("<br>", unsafe_allow_html=True)
+        dl_col, space1, space2, space3, clr_col = st.columns([2, 3, 2, 3, 1.2])
+        
+        with dl_col:
+            df = pd.DataFrame(st.session_state['journal'])
+            df_export = df.drop(columns=['Inputs']) 
+            csv = df_export.to_csv(index=False).encode('utf-8')
+            dl_txt = "📥 Download CSV" if lang == "English" else "📥 Download CSV" 
+            st.download_button(label=dl_txt, data=csv, file_name='macro_journal.csv', mime='text/csv')
+            
+        with clr_col:
+            clr_txt = "🗑️ Clear All Data" if lang == "English" else "🗑️ සියලු දත්ත මකන්න" 
+            if st.button(clr_txt, type="primary"): 
+                st.session_state['journal'] = []
+                st.session_state['loaded_data'] = None
+                st.rerun()
+
+# --- NEW TAB: HISTORICAL CASE STUDIES ---
+with tab4:
+    if lang == "English":
+        st.header("📚 Historical Case Studies")
+        st.write("Review how past macroeconomic data impacted the US Dollar (DXY).")
+        
+        with st.expander("📌 Case Study 1: The Post-COVID Inflation Shock (2022 CPI)"):
+            st.write("""
+            **Scenario:** US Inflation hit 9.1% (40-year highs).
+            * **Leading Data:** PPI was surging due to supply chain issues. Energy prices (Oil) skyrocketed due to the Russia-Ukraine war. Import prices were massive.
+            * **Prediction Tool Score:** 100% Bullish (DXY).
+            * **Result:** The Fed was forced into aggressive rate hikes. DXY rallied to a 20-year high of 114.78. EUR/USD dropped below parity (1.0000). US30 and NASDAQ crashed heavily.
+            """)
+            
+        with st.expander("📌 Case Study 2: The Dovish Pivot Expectations (Late 2023 FOMC)"):
+            st.write("""
+            **Scenario:** Inflation was cooling down rapidly towards 3%.
+            * **Leading Data:** Core PCE showed consecutive drops. Jobless claims started to edge higher. Fedspeak shifted from 'hike more' to 'hold and wait'.
+            * **Prediction Tool Score:** 35% Bearish (DXY).
+            * **Result:** Jerome Powell delivered a dovish press conference, and the Dot Plot showed 3 rate cuts for 2024. DXY dumped aggressively, sending XAU/USD (Gold) and US Indices (NASDAQ/US30) to all-time highs.
+            """)
+    else:
+        st.header("📚 අතීත සිදුවීම් අධ්‍යයනය")
+        st.write("අතීතයේ ආර්ථික දත්ත ඩොලරයට බලපාපු විදිය මෙතනින් අධ්‍යයනය කරන්න.")
+        
+        with st.expander("📌 1 වන අධ්‍යයනය: පශ්චාත්-කොවිඩ් උද්ධමන කම්පනය (2022 CPI)"):
+            st.write("""
+            **තත්ත්වය:** ඇමෙරිකානු උද්ධමනය 9.1% දක්වා (වසර 40ක උපරිමයට) ඉහළ ගියේය.
+            * **පෙරගමන් දත්ත:** සැපයුම් ජාලයේ ගැටලු නිසා PPI ඉහළ යමින් තිබුණි. රුසියානු-යුක්රේන යුද්ධය නිසා බලශක්ති (ඉන්ධන) මිල ගණන් අහසට නැග තිබුණි. ආනයන මිලද විශාල ලෙස ඉහළ ගොස් තිබුණි.
+            * **පුරෝකථන මෙවලමේ ලකුණ:** 100% Bullish (DXY).
+            * **ප්‍රතිඵලය:** ෆෙඩරල් බැංකුවට (Fed) දැඩි ලෙස පොලී අනුපාත වැඩි කිරීමට සිදුවිය. DXY දර්ශකය වසර 20ක උපරිම අගය වූ 114.78 දක්වා ඉහළ ගියේය. EUR/USD අගය 1.0000 ට වඩා පහත වැටුණි. US30 සහ NASDAQ දර්ශක දැඩි ලෙස කඩා වැටුණි.
+            """)
+            
+        with st.expander("📌 2 වන අධ්‍යයනය: Dovish Pivot අපේක්ෂාවන් (2023 අගභාගයේ FOMC)"):
+            st.write("""
+            **තත්ත්වය:** උද්ධමනය 3% දක්වා වේගයෙන් පහත වැටෙමින් තිබුණි.
+            * **පෙරගමන් දත්ත:** Core PCE අඛණ්ඩව පහත වැටෙන බව පෙන්නුම් කළේය. Jobless claims (රැකියා විරහිත දත්ත) තරමත් ඉහළ යාමට පටන් ගෙන තිබුණි. Fed නිලධාරීන්ගේ ප්‍රකාශ (Fedspeak) 'තවත් පොලී වැඩි කළ යුතුයි' යන තැනින් මිදී 'දැනට ඇති, අපි බලා සිටිමු' යන තැනට මාරු වී තිබුණි.
+            * **පුරෝකථන මෙවලමේ ලකුණ:** 35% Bearish (DXY).
+            * **ප්‍රතිඵලය:** ජෙරොම් පවෙල් (Jerome Powell) විසින් Dovish මාධ්‍ය සාකච්ඡාවක් ලබා දුන් අතර, Dot Plot මගින් 2024 වසර සඳහා පොලී අනුපාත කප්පාදු 3ක් පෙන්වා දෙන ලදී. මේ නිසා DXY දර්ශකය වේගයෙන් කඩා වැටුණු අතර, XAU/USD (රන්) සහ US Indices (NASDAQ/US30) සර්වකාලීන උපරිම අගයන් (All-time highs) දක්වා ඉහළ ගියේය.
             """)
