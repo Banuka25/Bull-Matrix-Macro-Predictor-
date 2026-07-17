@@ -132,36 +132,51 @@ def get_num_val(event_name, input_key, default_val):
         return st.session_state['loaded_data']['Inputs'].get(input_key, default_val)
     return default_val
 
-# --- API Fetch Function ---
+# --- SMARTER API Fetch Function ---
 @st.cache_data(ttl=3600)
-def fetch_macro_data_from_fmp(keyword):
+def fetch_macro_data_from_fmp(event_type):
     try:
-        api_key = st.secrets["FMP_API_KEY"]
-    except Exception:
-        return None, None
+        api_key = st.secrets.get("FMP_API_KEY")
+        if not api_key: return "NO_KEY", "API Key is missing in Secrets."
         
-    if not api_key: return None, None
-    
-    today = datetime.datetime.now()
-    start = (today - datetime.timedelta(days=15)).strftime("%Y-%m-%d")
-    end = (today + datetime.timedelta(days=15)).strftime("%Y-%m-%d")
-    
-    url = f"https://financialmodelingprep.com/api/v3/economic_calendar?from={start}&to={end}&apikey={api_key}"
-    try:
+        today = datetime.datetime.now()
+        # Expanded search window to 60 days to catch all monthly/quarterly events
+        start = (today - datetime.timedelta(days=30)).strftime("%Y-%m-%d")
+        end = (today + datetime.timedelta(days=30)).strftime("%Y-%m-%d")
+        
+        url = f"https://financialmodelingprep.com/api/v3/economic_calendar?from={start}&to={end}&apikey={api_key}"
         res = requests.get(url)
+        
         if res.status_code == 200:
             data = res.json()
-            for item in data:
-                if item.get("country") == "US" and keyword.lower() in str(item.get("event", "")).lower():
-                    prev = item.get("previous")
-                    fc = item.get("estimate")
-                    if prev is not None and fc is not None:
-                        # Scale down massive NFP numbers (e.g., 180000 -> 180)
-                        if "payrolls" in keyword.lower() and float(prev) > 500:
-                            return float(prev)/1000, float(fc)/1000
-                        return float(prev), float(fc)
-    except Exception:
-        pass
+            
+            # Check if FMP returned an error (e.g., limit reached, unverified email)
+            if isinstance(data, dict) and "Error Message" in data:
+                return "API_ERROR", data["Error Message"]
+                
+            if isinstance(data, list):
+                # Broader keywords to match FMP's naming conventions
+                keywords = []
+                if event_type == "CPI (Consumer Price Index)": keywords = ["cpi", "consumer price", "inflation rate"]
+                elif event_type == "NFP (Non-Farm Payrolls)": keywords = ["non farm", "nonfarm", "payrolls"]
+                elif event_type == "Core PCE Price Index": keywords = ["pce price index", "core pce", "personal consumption"]
+                elif event_type == "Advance GDP": keywords = ["gdp growth", "gross domestic product"]
+                elif event_type == "FOMC Rate Decision": keywords = ["fed interest rate", "fomc", "interest rate decision", "fed rate"]
+
+                for item in data:
+                    if item.get("country") == "US":
+                        event_name = str(item.get("event", "")).lower()
+                        for kw in keywords:
+                            if kw in event_name:
+                                prev = item.get("previous")
+                                fc = item.get("estimate")
+                                if prev is not None and fc is not None:
+                                    if "payroll" in event_name and float(prev) > 500:
+                                        return float(prev)/1000, float(fc)/1000
+                                    return float(prev), float(fc)
+    except Exception as e:
+        return "CODE_ERROR", str(e)
+        
     return None, None
 
 # --- Custom SVG Icons Definition ---
@@ -197,25 +212,27 @@ with tab1:
 
     major_news = st.sidebar.radio("Choose Event:", events_list, index=default_event_idx)
 
-    # --- API Auto-Fetch Logic ---
+    # --- ADVANCED API Auto-Fetch Logic ---
     st.sidebar.markdown("---")
     auto_fetch = st.sidebar.checkbox("📡 Auto-Fetch API Data (FMP)", value=False, help="Requires FMP_API_KEY in Streamlit Secrets")
     
     api_prev, api_fc = None, None
     if auto_fetch:
-        keyword_map = {
-            "CPI (Consumer Price Index)": "consumer price index",
-            "NFP (Non-Farm Payrolls)": "non farm payrolls",
-            "Core PCE Price Index": "core pce",
-            "Advance GDP": "gdp growth rate",
-            "FOMC Rate Decision": "fed interest rate"
-        }
-        kw = keyword_map.get(major_news, "")
-        api_prev, api_fc = fetch_macro_data_from_fmp(kw)
-        if api_prev is not None and api_fc is not None:
+        api_prev, api_fc = fetch_macro_data_from_fmp(major_news)
+        
+        if api_prev == "NO_KEY":
+            st.sidebar.warning("⚠️ API Key is missing in Secrets.")
+            api_prev, api_fc = None, None
+        elif api_prev == "API_ERROR":
+            st.sidebar.error(f"⚠️ FMP Server Error: {api_fc}") # Displays exactly what FMP is complaining about
+            api_prev, api_fc = None, None
+        elif api_prev == "CODE_ERROR":
+            st.sidebar.error("⚠️ Connection Error. Check requirements.txt.")
+            api_prev, api_fc = None, None
+        elif api_prev is not None and api_fc is not None:
             st.sidebar.success("✅ Live Data Synced!")
         else:
-            st.sidebar.warning("⚠️ API Key missing or data not found.")
+            st.sidebar.info("⏳ No upcoming data found for this event in the current 60-day window.")
 
     # --- Bull Matrix Personal Branding Footer ---
     st.sidebar.markdown("<br><br><br>", unsafe_allow_html=True)
