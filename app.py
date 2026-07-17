@@ -129,17 +129,16 @@ def get_num_val(event_name, input_key, default_val):
         return st.session_state['loaded_data']['Inputs'].get(input_key, default_val)
     return default_val
 
-# --- UPGRADED API Fetch Function (Safe Free-Tier Limits) ---
-@st.cache_data(ttl=3600)
+# --- BULLETPROOF API FETCH WITH DEBUG MODE ---
+# Cache ඉවත් කළා, සෑම පරීක්ෂාවකදීම Live අදින්න.
 def fetch_macro_data_from_fmp(event_type):
     try:
         api_key = st.secrets.get("FMP_API_KEY")
         if not api_key: return "NO_KEY", "API Key is missing in Secrets."
         
         today = datetime.datetime.now()
-        # දින පරාසය 45කට අඩු කළා (Free API වලට ගැලපෙන සේ)
-        start = (today - datetime.timedelta(days=35)).strftime("%Y-%m-%d")
-        end = (today + datetime.timedelta(days=10)).strftime("%Y-%m-%d")
+        start = (today - datetime.timedelta(days=90)).strftime("%Y-%m-%d")
+        end = (today + datetime.timedelta(days=30)).strftime("%Y-%m-%d")
         
         url = f"https://financialmodelingprep.com/api/v3/economic_calendar?from={start}&to={end}&apikey={api_key}"
         res = requests.get(url)
@@ -152,7 +151,7 @@ def fetch_macro_data_from_fmp(event_type):
                 
             if isinstance(data, list):
                 if len(data) == 0:
-                    return "API_EMPTY", "දත්ත ගබඩාව හිස්ව පවතී (Free Tier Range Limit)"
+                    return "API_EMPTY", "දත්ත ගබඩාව හිස්ව පවතී (Free Tier Limit)"
 
                 keywords = []
                 if event_type == "CPI (Consumer Price Index)": keywords = ["cpi", "consumer price", "inflation"]
@@ -162,35 +161,55 @@ def fetch_macro_data_from_fmp(event_type):
                 elif event_type == "FOMC Rate Decision": keywords = ["fed", "fomc", "interest rate", "rate decision"]
 
                 matches = []
+                debug_us_events = [] # API එකෙන් එවන US නිවුස් මොනවද කියලා බලාගන්න
+                
                 for item in data:
                     country = str(item.get("country", "")).upper()
                     currency = str(item.get("currency", "")).upper()
                     
                     if country in ["US", "UNITED STATES", "USA"] or currency == "USD":
-                        event_name = str(item.get("event", "")).lower()
+                        event_name = str(item.get("event", "")).strip()
+                        
+                        # Debugging සඳහා අලුත්ම US නිවුස් ටික එකතු කරගන්නවා
+                        if event_name and event_name not in debug_us_events:
+                            debug_us_events.append(event_name)
+                            
+                        event_lower = event_name.lower()
                         for kw in keywords:
-                            if kw in event_name:
-                                prev = item.get("previous")
-                                fc = item.get("estimate")
-                                actual = item.get("actual")
+                            if kw in event_lower:
+                                prev_raw = item.get("previous")
+                                fc_raw = item.get("estimate")
+                                act_raw = item.get("actual")
 
-                                # Aggressive Fallback: අගයන් මිස් වෙලා නම් කොහෙන් හරි අගයක් අදිනවා
-                                if prev is None: prev = actual
-                                if fc is None: fc = prev
-
-                                if prev is not None:
+                                # Safe Float Conversion Logic
+                                def safe_float(v):
                                     try:
-                                        p_val = float(prev)
-                                        f_val = float(fc)
-                                        if "payroll" in event_name and p_val > 500:
-                                            matches.append((p_val/1000, f_val/1000))
-                                        else:
-                                            matches.append((p_val, f_val))
-                                    except Exception:
-                                        pass
+                                        if v is None: return None
+                                        v_str = str(v).replace(",", "").strip()
+                                        if v_str == "": return None
+                                        return float(v_str)
+                                    except: return None
+                                    
+                                p_val = safe_float(prev_raw)
+                                f_val = safe_float(fc_raw)
+                                a_val = safe_float(act_raw)
+                                
+                                # Aggressive Fallback: අගයක් කොහෙන් හරි අදිනවා
+                                if p_val is None: p_val = a_val
+                                if f_val is None: f_val = p_val
+                                
+                                if p_val is not None and f_val is not None:
+                                    if "payroll" in event_lower and p_val > 500:
+                                        matches.append((p_val/1000, f_val/1000))
+                                    else:
+                                        matches.append((p_val, f_val))
                 
                 if matches:
                     return matches[-1] # අලුත්ම දත්තය ලබා දෙයි
+                else:
+                    # අපිට නිවුස් එක අහු වුණේ නැත්නම්, API එකෙන් ආපු වෙනත් US නිවුස් 8ක් පෙන්නනවා
+                    debug_us_events.reverse()
+                    return "DEBUG_NO_MATCH", debug_us_events[:8]
                     
     except Exception as e:
         return "CODE_ERROR", str(e)
@@ -249,10 +268,15 @@ with tab1:
         elif api_prev == "CODE_ERROR":
             st.sidebar.error("⚠️ Connection Error. Check requirements.txt.")
             api_prev, api_fc = None, None
+        elif api_prev == "DEBUG_NO_MATCH":
+            st.sidebar.warning("⏳ නිවුස් එක අහු වුණේ නෑ. API එක එව්ව වෙනත් US දත්ත:")
+            for e in api_fc:
+                st.sidebar.caption(f"🔹 {e}")
+            api_prev, api_fc = None, None
         elif api_prev is not None and api_fc is not None:
             st.sidebar.success("✅ Live Data Synced!")
         else:
-            st.sidebar.info("⏳ No upcoming data found for this event in the current 45-day window.")
+            st.sidebar.info("⏳ No upcoming data found for this event.")
 
     # --- Bull Matrix Personal Branding Footer ---
     st.sidebar.markdown("<br><br><br>", unsafe_allow_html=True)
