@@ -2,6 +2,7 @@ import streamlit as st
 import plotly.graph_objects as go
 import pandas as pd
 import datetime
+import pytz
 import base64
 import os
 
@@ -111,8 +112,12 @@ def create_gauge_chart(score):
     return fig
 
 def save_to_journal(event_name, score, direction_text, inputs_dict):
+    # Set explicitly to Sri Lanka Timezone
+    sl_tz = pytz.timezone('Asia/Colombo')
+    current_time = datetime.datetime.now(sl_tz).strftime("%Y-%m-%d %H:%M")
+    
     entry = {
-        "Date & Time": datetime.datetime.now().strftime("%Y-%m-%d %H:%M"),
+        "Date & Time": current_time,
         "News Event": event_name,
         "DXY Score": f"{score}%",
         "Predicted Direction": direction_text,
@@ -940,27 +945,60 @@ with tab2:
             
             st.markdown("<hr style='border: none; border-top: 1px solid rgba(255, 255, 255, 0.1); margin: 12px 0;'/>", unsafe_allow_html=True)
                 
-        if st.button("🗑️ Clear All Data" if lang == "English" else "🗑️ සියලුම දත්ත මකන්න", type="primary"):
-            st.session_state['journal'] = []
-            st.session_state['loaded_data'] = None
-            st.rerun()
+        # --- UI Balanced Action Buttons (Download & Clear) ---
+        st.markdown("<br>", unsafe_allow_html=True)
+        dl_col, clr_col = st.columns([1, 1])
+        
+        with dl_col:
+            df = pd.DataFrame(st.session_state['journal'])
+            df_export = df.drop(columns=['Inputs']) # Exclude raw dictionary from CSV for cleaner look
+            csv = df_export.to_csv(index=False).encode('utf-8')
+            dl_txt = "📥 Download CSV" if lang == "English" else "📥 දත්ත CSV ලෙස සේව් කරන්න"
+            st.download_button(label=dl_txt, data=csv, file_name='macro_journal.csv', mime='text/csv', use_container_width=True)
+            
+        with clr_col:
+            clr_txt = "🗑️ Clear All Data" if lang == "English" else "🗑️ සියලුම දත්ත මකන්න"
+            if st.button(clr_txt, type="primary", use_container_width=True):
+                st.session_state['journal'] = []
+                st.session_state['loaded_data'] = None
+                st.rerun()
 
 with tab3:
-    st.header("📚 Historical Case Studies" if lang == "English" else "📚 අතීත සිදුවීම් අධ්‍යයනය")
-    st.write("Review how past macroeconomic data impacted the US Dollar (DXY)." if lang == "English" else "අතීතයේ ආර්ථික දත්ත ඩොලරයට බලපාපු විදිය මෙතනින් අධ්‍යයනය කරන්න.")
-    
-    with st.expander("📌 Case Study 1: The Post-COVID Inflation Shock (2022 CPI)"):
-        st.write("""
-        **Scenario:** US Inflation hit 9.1% (40-year highs).
-        * **Leading Data:** PPI was surging due to supply chain issues. Energy prices (Oil) skyrocketed due to the Russia-Ukraine war. Import prices were massive.
-        * **Prediction Tool Score:** 100% Bullish (DXY).
-        * **Result:** The Fed was forced into aggressive rate hikes. DXY rallied to a 20-year high of 114.78. EUR/USD dropped below parity (1.0000). US30 and NASDAQ crashed heavily.
-        """)
+    if lang == "English":
+        st.header("📚 Historical Case Studies")
+        st.write("Review how past macroeconomic data impacted the US Dollar (DXY).")
         
-    with st.expander("📌 Case Study 2: The Dovish Pivot Expectations (Late 2023 FOMC)"):
-        st.write("""
-        **Scenario:** Inflation was cooling down rapidly towards 3%.
-        * **Leading Data:** Core PCE showed consecutive drops. Jobless claims started to edge higher. Fedspeak shifted from 'hike more' to 'hold and wait'.
-        * **Prediction Tool Score:** 35% Bearish (DXY).
-        * **Result:** Jerome Powell delivered a dovish press conference, and the Dot Plot showed 3 rate cuts for 2024. DXY dumped aggressively, sending XAU/USD (Gold) and US Indices (NASDAQ/US30) to all-time highs.
-        """)
+        with st.expander("📌 Case Study 1: The Post-COVID Inflation Shock (2022 CPI)"):
+            st.write("""
+            **Scenario:** US Inflation hit 9.1% (40-year highs).
+            * **Leading Data:** PPI was surging due to supply chain issues. Energy prices (Oil) skyrocketed due to the Russia-Ukraine war. Import prices were massive.
+            * **Prediction Tool Score:** 100% Bullish (DXY).
+            * **Result:** The Fed was forced into aggressive rate hikes. DXY rallied to a 20-year high of 114.78. EUR/USD dropped below parity (1.0000). US30 and NASDAQ crashed heavily.
+            """)
+            
+        with st.expander("📌 Case Study 2: The Dovish Pivot Expectations (Late 2023 FOMC)"):
+            st.write("""
+            **Scenario:** Inflation was cooling down rapidly towards 3%.
+            * **Leading Data:** Core PCE showed consecutive drops. Jobless claims started to edge higher. Fedspeak shifted from 'hike more' to 'hold and wait'.
+            * **Prediction Tool Score:** 35% Bearish (DXY).
+            * **Result:** Jerome Powell delivered a dovish press conference, and the Dot Plot showed 3 rate cuts for 2024. DXY dumped aggressively, sending XAU/USD (Gold) and US Indices (NASDAQ/US30) to all-time highs.
+            """)
+    else:
+        st.header("📚 අතීත සිදුවීම් අධ්‍යයනය")
+        st.write("අතීතයේ ආර්ථික දත්ත ඩොලරයට බලපාපු විදිය මෙතනින් අධ්‍යයනය කරන්න.")
+        
+        with st.expander("📌 1 වන අධ්‍යයනය: පශ්චාත්-කොවිඩ් උද්ධමන කම්පනය (2022 CPI)"):
+            st.write("""
+            **තත්ත්වය:** ඇමෙරිකානු උද්ධමනය 9.1% දක්වා (වසර 40ක උපරිමයට) ඉහළ ගියේය.
+            * **පෙරගමන් දත්ත:** සැපයුම් ජාලයේ ගැටලු නිසා PPI ඉහළ යමින් තිබුණි. රුසියානු-යුක්රේන යුද්ධය නිසා බලශක්ති (ඉන්ධන) මිල ගණන් අහසට නැග තිබුණි. ආනයන මිලද විශාල ලෙස ඉහළ ගොස් තිබුණි.
+            * **පුරෝකථන මෙවලමේ ලකුණ:** 100% Bullish (DXY).
+            * **ප්‍රතිඵලය:** ෆෙඩරල් බැංකුවට (Fed) දැඩි ලෙස පොලී අනුපාත වැඩි කිරීමට සිදුවිය. DXY දර්ශකය වසර 20ක උපරිම අගය වූ 114.78 දක්වා ඉහළ ගියේය. EUR/USD අගය 1.0000 ට වඩා පහත වැටුණි. US30 සහ NASDAQ දර්ශක දැඩි ලෙස කඩා වැටුණි.
+            """)
+            
+        with st.expander("📌 2 වන අධ්‍යයනය: Dovish Pivot අපේක්ෂාවන් (2023 අගභාගයේ FOMC)"):
+            st.write("""
+            **තත්ත්වය:** උද්ධමනය 3% දක්වා වේගයෙන් පහත වැටෙමින් තිබුණි.
+            * **පෙරගමන් දත්ත:** Core PCE අඛණ්ඩව පහත වැටෙන බව පෙන්නුම් කළේය. Jobless claims (රැකියා විරහිත දත්ත) තරමක් ඉහළ යාමට පටන් ගෙන තිබුණි. Fed නිලධාරීන්ගේ ප්‍රකාශ (Fedspeak) 'තවත් පොලී වැඩි කළ යුතුයි' යන තැනින් මිදී 'දැනට ඇති, අපි බලා සිටිමු' යන තැනට මාරු වී තිබුණි.
+            * **පුරෝකථන මෙවලමේ ලකුණ:** 35% Bearish (DXY).
+            * **ප්‍රතිඵලය:** ජෙරොම් පවෙල් (Jerome Powell) විසින් Dovish මාධ්‍ය සාකච්ඡාවක් ලබා දුන් අතර, Dot Plot මගින් 2024 වසර සඳහා පොලී අනුපාත කප්පාදු 3ක් පෙන්වා දෙන ලදී. මේ නිසා DXY දර්ශකය වේගයෙන් කඩා වැටුණු අතර, XAU/USD (රන්) සහ US Indices (NASDAQ/US30) සර්වකාලීන උපරිම අගයන් (All-time highs) දක්වා ඉහළ ගියේය.
+            """)
