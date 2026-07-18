@@ -165,25 +165,30 @@ st.markdown("""
         .vertical-divider { display: none !important; }
         .radar-divider { margin: 15px 0 !important; }
 
-        /* Compact Journal Table - Fits on Mobile Screen */
+        /* SCROLLABLE Journal Table for Mobile (RESTORED SWIPE FUNCTIONALITY) */
         div[data-testid="stHorizontalBlock"]:has(.journal-row-marker) {
             display: flex !important; flex-direction: row !important; flex-wrap: nowrap !important; width: 100% !important;
-            overflow: hidden !important; padding-bottom: 5px !important; gap: 2px !important; align-items: center !important;
+            overflow-x: auto !important; overflow-y: hidden !important; -webkit-overflow-scrolling: touch; 
+            padding-bottom: 8px !important; gap: 5px !important; align-items: center !important;
         }
-        div[data-testid="stHorizontalBlock"]:has(.journal-row-marker) > div[data-testid="column"] { padding: 0 2px !important; min-width: 0 !important; }
-        div[data-testid="stHorizontalBlock"]:has(.journal-row-marker) > div[data-testid="column"]:nth-of-type(1) { flex: 2 !important; width: 20% !important; }
-        div[data-testid="stHorizontalBlock"]:has(.journal-row-marker) > div[data-testid="column"]:nth-of-type(2) { flex: 2.2 !important; width: 22% !important; }
-        div[data-testid="stHorizontalBlock"]:has(.journal-row-marker) > div[data-testid="column"]:nth-of-type(3) { flex: 1.5 !important; width: 15% !important; }
-        div[data-testid="stHorizontalBlock"]:has(.journal-row-marker) > div[data-testid="column"]:nth-of-type(4) { flex: 2.3 !important; width: 23% !important; }
-        div[data-testid="stHorizontalBlock"]:has(.journal-row-marker) > div[data-testid="column"]:nth-of-type(5) { flex: 2 !important; width: 20% !important; }
+        div[data-testid="stHorizontalBlock"]:has(.journal-row-marker)::-webkit-scrollbar { height: 4px; }
+        div[data-testid="stHorizontalBlock"]:has(.journal-row-marker)::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.2); border-radius: 10px; }
+
+        div[data-testid="stHorizontalBlock"]:has(.journal-row-marker) > div[data-testid="column"] { padding: 0 4px !important; flex: 0 0 auto !important; width: auto !important; }
         
-        .journal-header b { font-size: 10px !important; line-height: 1.1 !important; word-wrap: break-word !important; display: block !important; }
-        .journal-text { font-size: 10px !important; line-height: 1.1 !important; word-wrap: break-word !important; white-space: pre-wrap !important; padding-top: 2px !important; }
-        .pred-text { font-size: 9px !important; display: block; }
+        div[data-testid="stHorizontalBlock"]:has(.journal-row-marker) > div[data-testid="column"]:nth-of-type(1) { min-width: 75px !important; }
+        div[data-testid="stHorizontalBlock"]:has(.journal-row-marker) > div[data-testid="column"]:nth-of-type(2) { min-width: 85px !important; }
+        div[data-testid="stHorizontalBlock"]:has(.journal-row-marker) > div[data-testid="column"]:nth-of-type(3) { min-width: 50px !important; }
+        div[data-testid="stHorizontalBlock"]:has(.journal-row-marker) > div[data-testid="column"]:nth-of-type(4) { min-width: 100px !important; }
+        div[data-testid="stHorizontalBlock"]:has(.journal-row-marker) > div[data-testid="column"]:nth-of-type(5) { min-width: 60px !important; }
+        
+        .journal-header b { font-size: 11px !important; line-height: 1.1 !important; word-wrap: break-word !important; display: block !important; }
+        .journal-text { font-size: 11px !important; line-height: 1.1 !important; word-wrap: break-word !important; white-space: pre-wrap !important; padding-top: 2px !important; }
+        .pred-text { font-size: 10px !important; display: block; }
         .pred-icon svg { width: 12px !important; height: 12px !important; }
 
-        div[data-testid="stHorizontalBlock"]:has(.journal-row-marker) div[data-testid="stHorizontalBlock"] { flex-direction: row !important; min-width: 0 !important; gap: 2px !important; justify-content: flex-start !important; }
-        button[title="Delete this entry"], button[title="Load this entry"] { width: 18px !important; height: 18px !important; min-height: 18px !important; min-width: 18px !important; }
+        div[data-testid="stHorizontalBlock"]:has(.journal-row-marker) div[data-testid="stHorizontalBlock"] { flex-direction: row !important; min-width: 0 !important; gap: 4px !important; justify-content: flex-start !important; }
+        button[title="Delete this entry"], button[title="Load this entry"] { width: 20px !important; height: 20px !important; min-height: 20px !important; min-width: 20px !important; }
 
         /* 50/50 Download and Clear Buttons on Mobile */
         div[data-testid="stHorizontalBlock"]:has(.action-btn-marker) > div[data-testid="column"]:nth-of-type(1),
@@ -781,7 +786,6 @@ with tab3:
                 
         # --- FIXED ALIGNMENT ACTION BUTTONS ---
         st.markdown("<br>", unsafe_allow_html=True)
-        # Using specific column sizes to place them together tightly on the left
         dl_col, clr_col, _empty_col = st.columns([1.5, 1.5, 7])
         marker_btn = '<span class="action-btn-marker" style="display:none;"></span>'
         
