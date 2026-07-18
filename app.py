@@ -239,7 +239,7 @@ def save_to_journal(event_name, score, direction_text, inputs_dict):
     except Exception as e:
         st.error(f"Error saving to Cloud: {e}")
 
-# --- UPDATED DATA FETCHING LOGIC ---
+# --- DATA FETCHING LOGIC ---
 def get_num_val(event_name, input_key, default_val):
     evt_cleaned = clean_evt(event_name)
     if st.session_state['loaded_data'] and st.session_state['loaded_data']['News Event'] == evt_cleaned:
@@ -277,6 +277,11 @@ st.markdown("---")
 
 tab_names = ["🔮 Live Predictor", "📅 Live Calendar", "📓 Trading Journal", "📚 Historical Case Studies"] if lang == "English" else ["🔮 සජීවී පුරෝකථනය", "📅 සජීවී දින දර්ශනය", "📓 ට්‍රේඩින් ජර්නල් එක", "📚 අතීත සිදුවීම් අධ්‍යයනය"]
 tab1, tab2, tab3, tab4 = st.tabs(tab_names)
+
+# Reusable Radar Variables
+p_lbl = "Previous" if lang == "English" else "පෙර අගය"
+f_lbl = "Forecast" if lang == "English" else "අපේක්ෂාව"
+r_lbl = "AI Expected" if lang == "English" else "AI අනුමානය"
 
 with tab1:
     st.sidebar.header("📅 Select Major News Event" if lang == "English" else "📅 ප්‍රධාන නිවුස් එක තෝරන්න")
@@ -421,15 +426,17 @@ with tab1:
             
             if score >= 60:
                 dev_color = "#00ffcc"
-                dev_signal = "🚀 Hotter & Accelerating (Strong Bullish)" if exp_value > cpi_previous else "⚖️ Hotter BUT Cooling (Fakeout Warning)"
+                dev_signal = "🚀 Hotter & Accelerating (Strong Bullish)" if lang == "English" else "🚀 අතිශය ප්‍රබල උද්ධමනයක් (Strong Bullish)"
+                if exp_value <= cpi_previous: dev_signal = "⚖️ Hotter BUT Cooling (Fakeout Warning)" if lang == "English" else "⚖️ වැඩි වුවත් පෙරට වඩා අඩුයි (Fakeout Warning)"
             elif score <= 40:
                 dev_color = "#ff4b4b"
-                dev_signal = "📉 Cooler & Decelerating (Strong Bearish)" if exp_value < cpi_previous else "⚖️ Cooler BUT Sticky (Fakeout Warning)"
+                dev_signal = "📉 Cooler & Decelerating (Strong Bearish)" if lang == "English" else "📉 වේගයෙන් අඩුවන උද්ධමනයක් (Strong Bearish)"
+                if exp_value >= cpi_previous: dev_signal = "⚖️ Cooler BUT Sticky (Fakeout Warning)" if lang == "English" else "⚖️ අඩු වුවත් පෙරට වඩා වැඩියි (Fakeout Warning)"
             else:
                 dev_color = "#FFC107"
-                dev_signal = "⚖️ In-line with Consensus (Neutral)"
+                dev_signal = "⚖️ In-line with Consensus (Neutral)" if lang == "English" else "⚖️ අපේක්ෂාවන්ට සමගාමීව (Neutral)"
 
-            st.markdown(f'''<div style="background-color: rgba(255, 255, 255, 0.03); border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 10px; padding: 15px;"><div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;"><div style="text-align: left;"><div style="font-size: 11px; color: gray; text-transform: uppercase;">Previous</div><div style="font-size: 22px; font-weight: bold; color: #a0a0a0;">{cpi_previous:.1f}%</div></div><div style="text-align: center;"><div style="font-size: 11px; color: gray; text-transform: uppercase;">Forecast</div><div style="font-size: 22px; font-weight: bold; color: white;">{cpi_forecast:.1f}%</div></div><div style="text-align: right;"><div style="font-size: 11px; color: gray; text-transform: uppercase;">AI Expected</div><div style="font-size: 22px; font-weight: bold; color: {dev_color};">{(exp_value - 0.05):.2f}% - {(exp_value + 0.05):.2f}%</div></div></div><div style="background: rgba(0,0,0,0.3); padding: 10px; border-radius: 5px;"><div style="font-size: 14px; color: {dev_color}; font-weight: bold; text-align: center;">{dev_signal}</div></div></div>''', unsafe_allow_html=True)
+            st.markdown(f'''<div style="background-color: rgba(255, 255, 255, 0.03); border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 10px; padding: 15px;"><div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;"><div style="text-align: left;"><div style="font-size: 11px; color: gray; text-transform: uppercase;">{p_lbl}</div><div style="font-size: 22px; font-weight: bold; color: #a0a0a0;">{cpi_previous:.1f}%</div></div><div style="text-align: center;"><div style="font-size: 11px; color: gray; text-transform: uppercase;">{f_lbl}</div><div style="font-size: 22px; font-weight: bold; color: white;">{cpi_forecast:.1f}%</div></div><div style="text-align: right;"><div style="font-size: 11px; color: gray; text-transform: uppercase;">{r_lbl}</div><div style="font-size: 22px; font-weight: bold; color: {dev_color};">{(exp_value - 0.05):.2f}% - {(exp_value + 0.05):.2f}%</div></div></div><div style="background: rgba(0,0,0,0.3); padding: 10px; border-radius: 5px;"><div style="font-size: 14px; color: {dev_color}; font-weight: bold; text-align: center;">{dev_signal}</div></div></div>''', unsafe_allow_html=True)
 
     # ----------------- 2. NFP CALCULATOR -----------------
     elif major_news.startswith("🟠 NFP"):
@@ -486,15 +493,17 @@ with tab1:
             
             if score >= 60:
                 dev_color = "#00ffcc"
-                dev_signal = "🚀 Strong Beat & Accelerating" if exp_value > nfp_previous else "⚖️ Beat BUT Decelerating (Fakeout Warning)"
+                dev_signal = "🚀 Strong Beat & Accelerating" if lang == "English" else "🚀 ප්‍රබල රැකියා වර්ධනයක් (Strong Bullish)"
+                if exp_value <= nfp_previous: dev_signal = "⚖️ Beat BUT Decelerating (Fakeout Warning)" if lang == "English" else "⚖️ වැඩි වුවත් පෙරට වඩා අඩුයි (Fakeout Warning)"
             elif score <= 40:
                 dev_color = "#ff4b4b"
-                dev_signal = "📉 Big Miss & Decelerating" if exp_value < nfp_previous else "⚖️ Miss BUT Sticky (Fakeout Warning)"
+                dev_signal = "📉 Big Miss & Decelerating" if lang == "English" else "📉 රැකියා වෙළඳපොළේ කඩාවැටීමක් (Strong Bearish)"
+                if exp_value >= nfp_previous: dev_signal = "⚖️ Miss BUT Sticky (Fakeout Warning)" if lang == "English" else "⚖️ අඩු වුවත් පෙරට වඩා වැඩියි (Fakeout Warning)"
             else:
                 dev_color = "#FFC107"
-                dev_signal = "⚖️ In-line with Consensus (Neutral)"
+                dev_signal = "⚖️ In-line with Consensus (Neutral)" if lang == "English" else "⚖️ අපේක්ෂාවන්ට සමගාමීව (Neutral)"
 
-            st.markdown(f'''<div style="background-color: rgba(255, 255, 255, 0.03); border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 10px; padding: 15px;"><div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;"><div style="text-align: left;"><div style="font-size: 11px; color: gray; text-transform: uppercase;">Previous</div><div style="font-size: 22px; font-weight: bold; color: #a0a0a0;">{nfp_previous}k</div></div><div style="text-align: center;"><div style="font-size: 11px; color: gray; text-transform: uppercase;">Forecast</div><div style="font-size: 22px; font-weight: bold; color: white;">{nfp_forecast}k</div></div><div style="text-align: right;"><div style="font-size: 11px; color: gray; text-transform: uppercase;">AI Expected</div><div style="font-size: 22px; font-weight: bold; color: {dev_color};">{(exp_value - 10):.0f}k - {(exp_value + 10):.0f}k</div></div></div><div style="background: rgba(0,0,0,0.3); padding: 10px; border-radius: 5px;"><div style="font-size: 14px; color: {dev_color}; font-weight: bold; text-align: center;">{dev_signal}</div></div></div>''', unsafe_allow_html=True)
+            st.markdown(f'''<div style="background-color: rgba(255, 255, 255, 0.03); border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 10px; padding: 15px;"><div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;"><div style="text-align: left;"><div style="font-size: 11px; color: gray; text-transform: uppercase;">{p_lbl}</div><div style="font-size: 22px; font-weight: bold; color: #a0a0a0;">{nfp_previous}k</div></div><div style="text-align: center;"><div style="font-size: 11px; color: gray; text-transform: uppercase;">{f_lbl}</div><div style="font-size: 22px; font-weight: bold; color: white;">{nfp_forecast}k</div></div><div style="text-align: right;"><div style="font-size: 11px; color: gray; text-transform: uppercase;">{r_lbl}</div><div style="font-size: 22px; font-weight: bold; color: {dev_color};">{(exp_value - 10):.0f}k - {(exp_value + 10):.0f}k</div></div></div><div style="background: rgba(0,0,0,0.3); padding: 10px; border-radius: 5px;"><div style="font-size: 14px; color: {dev_color}; font-weight: bold; text-align: center;">{dev_signal}</div></div></div>''', unsafe_allow_html=True)
 
     # ----------------- 3. CORE PCE CALCULATOR -----------------
     elif major_news.startswith("🟣 Core"):
@@ -547,15 +556,17 @@ with tab1:
             
             if score >= 60:
                 dev_color = "#00ffcc"
-                dev_signal = "🚀 Hotter & Accelerating" if exp_value > pce_previous else "⚖️ Hotter BUT Cooling"
+                dev_signal = "🚀 Hotter & Accelerating" if lang == "English" else "🚀 ප්‍රබල උද්ධමනයක් (Strong Bullish)"
+                if exp_value <= pce_previous: dev_signal = "⚖️ Hotter BUT Cooling" if lang == "English" else "⚖️ වැඩි වුවත් පෙරට වඩා අඩුයි"
             elif score <= 40:
                 dev_color = "#ff4b4b"
-                dev_signal = "📉 Cooler & Decelerating" if exp_value < pce_previous else "⚖️ Cooler BUT Sticky"
+                dev_signal = "📉 Cooler & Decelerating" if lang == "English" else "📉 වේගයෙන් අඩුවන උද්ධමනයක් (Strong Bearish)"
+                if exp_value >= pce_previous: dev_signal = "⚖️ Cooler BUT Sticky" if lang == "English" else "⚖️ අඩු වුවත් පෙරට වඩා වැඩියි"
             else:
                 dev_color = "#FFC107"
-                dev_signal = "⚖️ In-line with Consensus (Neutral)"
+                dev_signal = "⚖️ In-line with Consensus (Neutral)" if lang == "English" else "⚖️ අපේක්ෂාවන්ට සමගාමීව (Neutral)"
 
-            st.markdown(f'''<div style="background-color: rgba(255, 255, 255, 0.03); border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 10px; padding: 15px;"><div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;"><div style="text-align: left;"><div style="font-size: 11px; color: gray; text-transform: uppercase;">Previous</div><div style="font-size: 22px; font-weight: bold; color: #a0a0a0;">{pce_previous:.1f}%</div></div><div style="text-align: center;"><div style="font-size: 11px; color: gray; text-transform: uppercase;">Forecast</div><div style="font-size: 22px; font-weight: bold; color: white;">{pce_forecast:.1f}%</div></div><div style="text-align: right;"><div style="font-size: 11px; color: gray; text-transform: uppercase;">AI Expected</div><div style="font-size: 22px; font-weight: bold; color: {dev_color};">{(exp_value - 0.05):.2f}% - {(exp_value + 0.05):.2f}%</div></div></div><div style="background: rgba(0,0,0,0.3); padding: 10px; border-radius: 5px;"><div style="font-size: 14px; color: {dev_color}; font-weight: bold; text-align: center;">{dev_signal}</div></div></div>''', unsafe_allow_html=True)
+            st.markdown(f'''<div style="background-color: rgba(255, 255, 255, 0.03); border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 10px; padding: 15px;"><div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;"><div style="text-align: left;"><div style="font-size: 11px; color: gray; text-transform: uppercase;">{p_lbl}</div><div style="font-size: 22px; font-weight: bold; color: #a0a0a0;">{pce_previous:.1f}%</div></div><div style="text-align: center;"><div style="font-size: 11px; color: gray; text-transform: uppercase;">{f_lbl}</div><div style="font-size: 22px; font-weight: bold; color: white;">{pce_forecast:.1f}%</div></div><div style="text-align: right;"><div style="font-size: 11px; color: gray; text-transform: uppercase;">{r_lbl}</div><div style="font-size: 22px; font-weight: bold; color: {dev_color};">{(exp_value - 0.05):.2f}% - {(exp_value + 0.05):.2f}%</div></div></div><div style="background: rgba(0,0,0,0.3); padding: 10px; border-radius: 5px;"><div style="font-size: 14px; color: {dev_color}; font-weight: bold; text-align: center;">{dev_signal}</div></div></div>''', unsafe_allow_html=True)
 
     # ----------------- 4. ADVANCE GDP CALCULATOR -----------------
     elif major_news.startswith("🔵 Advance"):
@@ -612,15 +623,17 @@ with tab1:
             
             if score >= 60:
                 dev_color = "#00ffcc"
-                dev_signal = "🚀 Stronger & Accelerating" if exp_value > gdp_previous else "⚖️ Stronger BUT Cooling"
+                dev_signal = "🚀 Stronger & Accelerating" if lang == "English" else "🚀 ප්‍රබල ආර්ථික වර්ධනයක් (Strong Bullish)"
+                if exp_value <= gdp_previous: dev_signal = "⚖️ Stronger BUT Cooling" if lang == "English" else "⚖️ වැඩි වුවත් පෙරට වඩා අඩුයි"
             elif score <= 40:
                 dev_color = "#ff4b4b"
-                dev_signal = "📉 Weaker & Decelerating" if exp_value < gdp_previous else "⚖️ Weaker BUT Sticky"
+                dev_signal = "📉 Weaker & Decelerating" if lang == "English" else "📉 දුර්වල ආර්ථික වර්ධනයක් (Strong Bearish)"
+                if exp_value >= gdp_previous: dev_signal = "⚖️ Weaker BUT Sticky" if lang == "English" else "⚖️ අඩු වුවත් පෙරට වඩා වැඩියි"
             else:
                 dev_color = "#FFC107"
-                dev_signal = "⚖️ In-line with Consensus (Neutral)"
+                dev_signal = "⚖️ In-line with Consensus (Neutral)" if lang == "English" else "⚖️ අපේක්ෂාවන්ට සමගාමීව (Neutral)"
 
-            st.markdown(f'''<div style="background-color: rgba(255, 255, 255, 0.03); border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 10px; padding: 15px;"><div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;"><div style="text-align: left;"><div style="font-size: 11px; color: gray; text-transform: uppercase;">Previous</div><div style="font-size: 22px; font-weight: bold; color: #a0a0a0;">{gdp_previous:.1f}%</div></div><div style="text-align: center;"><div style="font-size: 11px; color: gray; text-transform: uppercase;">Forecast</div><div style="font-size: 22px; font-weight: bold; color: white;">{gdp_forecast:.1f}%</div></div><div style="text-align: right;"><div style="font-size: 11px; color: gray; text-transform: uppercase;">AI Expected</div><div style="font-size: 22px; font-weight: bold; color: {dev_color};">{(exp_value - 0.1):.2f}% - {(exp_value + 0.1):.2f}%</div></div></div><div style="background: rgba(0,0,0,0.3); padding: 10px; border-radius: 5px;"><div style="font-size: 14px; color: {dev_color}; font-weight: bold; text-align: center;">{dev_signal}</div></div></div>''', unsafe_allow_html=True)
+            st.markdown(f'''<div style="background-color: rgba(255, 255, 255, 0.03); border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 10px; padding: 15px;"><div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;"><div style="text-align: left;"><div style="font-size: 11px; color: gray; text-transform: uppercase;">{p_lbl}</div><div style="font-size: 22px; font-weight: bold; color: #a0a0a0;">{gdp_previous:.1f}%</div></div><div style="text-align: center;"><div style="font-size: 11px; color: gray; text-transform: uppercase;">{f_lbl}</div><div style="font-size: 22px; font-weight: bold; color: white;">{gdp_forecast:.1f}%</div></div><div style="text-align: right;"><div style="font-size: 11px; color: gray; text-transform: uppercase;">{r_lbl}</div><div style="font-size: 22px; font-weight: bold; color: {dev_color};">{(exp_value - 0.1):.2f}% - {(exp_value + 0.1):.2f}%</div></div></div><div style="background: rgba(0,0,0,0.3); padding: 10px; border-radius: 5px;"><div style="font-size: 14px; color: {dev_color}; font-weight: bold; text-align: center;">{dev_signal}</div></div></div>''', unsafe_allow_html=True)
 
     # ----------------- 5. FOMC RATE DECISION CALCULATOR -----------------
     elif major_news.startswith("🔴 FOMC"):
@@ -636,9 +649,10 @@ with tab1:
             st.subheader(sub_report_txt)
             col_prev, col_fc = st.columns(2)
             with col_prev:
-                fomc_previous = st.number_input(f"🔴 📉 Previous Rate (%):", value=get_num_val(major_news, "fomc_prev", 5.50), step=0.25, format="%.2f", key=f"fomc_prev{lsuf}")
+                pr_txt = "📉 Previous Rate" if lang == "English" else "📉 පෙර අනුපාතය"
+                fomc_previous = st.number_input(f"🔴 {pr_txt} (%):", value=get_num_val(major_news, "fomc_prev", 5.50), step=0.25, format="%.2f", key=f"fomc_prev{lsuf}")
             with col_fc:
-                fomc_forecast = st.number_input(f"🔴 📊 Market Forecast (%):", value=get_num_val(major_news, "fomc_fc", 5.25), step=0.25, format="%.2f", key=f"fomc_fc{lsuf}")
+                fomc_forecast = st.number_input(f"🔴 📊 {fc_txt} (%):", value=get_num_val(major_news, "fomc_fc", 5.25), step=0.25, format="%.2f", key=f"fomc_fc{lsuf}")
             st.markdown("<br>", unsafe_allow_html=True)
 
             fedwatch = st.selectbox("🔴 1. CME FedWatch Probability:", opt_fed, index=get_idx(major_news, "fed", opt_fed), key=f"fomc_fed{lsuf}")
@@ -677,15 +691,17 @@ with tab1:
             
             if score >= 60:
                 dev_color = "#00ffcc"
-                dev_signal = "🦅 Hawkish Hike / Hold" if exp_value >= fomc_previous else "⚖️ Hawkish rhetoric BUT Rate Capped"
+                dev_signal = "🦅 Hawkish Hike / Hold" if lang == "English" else "🦅 පොලී අනුපාත ඉහළට (Strong Bullish)"
+                if exp_value < fomc_previous: dev_signal = "⚖️ Hawkish rhetoric BUT Rate Capped" if lang == "English" else "⚖️ ප්‍රකාශ දැඩි වුවත් අනුපාත වැඩිවී නැත"
             elif score <= 40:
                 dev_color = "#ff4b4b"
-                dev_signal = "🕊️ Dovish Cut & Accelerating" if exp_value < fomc_previous else "⚖️ Dovish rhetoric BUT Sticky Rates"
+                dev_signal = "🕊️ Dovish Cut & Accelerating" if lang == "English" else "🕊️ පොලී අනුපාත කප්පාදුවක් (Strong Bearish)"
+                if exp_value > fomc_previous: dev_signal = "⚖️ Dovish rhetoric BUT Sticky Rates" if lang == "English" else "⚖️ ප්‍රකාශ ලිහිල් වුවත් අනුපාත අඩුවී නැත"
             else:
                 dev_color = "#FFC107"
-                dev_signal = "⚖️ In-line with Market Pricing (Neutral)"
+                dev_signal = "⚖️ In-line with Market Pricing (Neutral)" if lang == "English" else "⚖️ අපේක්ෂාවන්ට සමගාමීව (Neutral)"
 
-            st.markdown(f'''<div style="background-color: rgba(255, 255, 255, 0.03); border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 10px; padding: 15px;"><div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;"><div style="text-align: left;"><div style="font-size: 11px; color: gray; text-transform: uppercase;">Previous</div><div style="font-size: 22px; font-weight: bold; color: #a0a0a0;">{fomc_previous:.2f}%</div></div><div style="text-align: center;"><div style="font-size: 11px; color: gray; text-transform: uppercase;">Forecast</div><div style="font-size: 22px; font-weight: bold; color: white;">{fomc_forecast:.2f}%</div></div><div style="text-align: right;"><div style="font-size: 11px; color: gray; text-transform: uppercase;">AI Expected</div><div style="font-size: 22px; font-weight: bold; color: {dev_color};">{(exp_value - 0.05):.2f}% - {(exp_value + 0.05):.2f}%</div></div></div><div style="background: rgba(0,0,0,0.3); padding: 10px; border-radius: 5px;"><div style="font-size: 14px; color: {dev_color}; font-weight: bold; text-align: center;">{dev_signal}</div></div></div>''', unsafe_allow_html=True)
+            st.markdown(f'''<div style="background-color: rgba(255, 255, 255, 0.03); border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 10px; padding: 15px;"><div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;"><div style="text-align: left;"><div style="font-size: 11px; color: gray; text-transform: uppercase;">{p_lbl}</div><div style="font-size: 22px; font-weight: bold; color: #a0a0a0;">{fomc_previous:.2f}%</div></div><div style="text-align: center;"><div style="font-size: 11px; color: gray; text-transform: uppercase;">{f_lbl}</div><div style="font-size: 22px; font-weight: bold; color: white;">{fomc_forecast:.2f}%</div></div><div style="text-align: right;"><div style="font-size: 11px; color: gray; text-transform: uppercase;">{r_lbl}</div><div style="font-size: 22px; font-weight: bold; color: {dev_color};">{(exp_value - 0.05):.2f}% - {(exp_value + 0.05):.2f}%</div></div></div><div style="background: rgba(0,0,0,0.3); padding: 10px; border-radius: 5px;"><div style="font-size: 14px; color: {dev_color}; font-weight: bold; text-align: center;">{dev_signal}</div></div></div>''', unsafe_allow_html=True)
 
 # --- NEW TAB: LIVE ECONOMIC CALENDAR ---
 with tab2:
