@@ -215,55 +215,75 @@ st.markdown("""
     .mobile-scroll-container > div {
         flex: 0 0 auto !important;
     }
+    
+    /* Custom Journal Classes for Desktop */
+    .journal-header b { font-size: 15px; }
+    .journal-text { font-size: 14px; color: #d0d0d0; padding-top: 5px; }
 
     /* UI FIX 3 & 4: Mobile Specific Adjustments */
     @media (max-width: 768px) {
         /* Hide vertical divider on mobile to prevent huge gaps */
-        .vertical-divider {
-            display: none !important;
-        }
-        
-        .radar-divider {
-            margin: 15px 0 !important;
-        }
+        .vertical-divider { display: none !important; }
+        .radar-divider { margin: 15px 0 !important; }
 
-        /* Force Journal Rows to be horizontal and scrollable on phone */
+        /* Journal Text Styling for Mobile */
+        .journal-header b { font-size: 11px !important; }
+        .journal-text { font-size: 11px !important; padding-top: 2px !important; white-space: normal !important; }
+        .pred-text { font-size: 11px !important; }
+        .pred-icon svg { width: 14px !important; height: 14px !important; }
+
+        /* Force Journal Rows to be horizontal and scrollable on phone with exact widths */
         div[data-testid="stHorizontalBlock"]:has(.journal-row-marker) {
             display: flex !important;
             flex-direction: row !important;
             flex-wrap: nowrap !important;
             overflow-x: auto !important;
             overflow-y: hidden !important;
-            padding-bottom: 15px !important;
+            padding-bottom: 10px !important;
+            gap: 5px !important; /* Smaller gap */
             -webkit-overflow-scrolling: touch;
         }
         div[data-testid="stHorizontalBlock"]:has(.journal-row-marker) > div[data-testid="column"] {
             width: auto !important;
             flex: 0 0 auto !important;
+            padding: 0 !important;
         }
-        div[data-testid="stHorizontalBlock"]:has(.journal-row-marker) > div[data-testid="column"]:nth-of-type(1) { min-width: 140px !important; }
-        div[data-testid="stHorizontalBlock"]:has(.journal-row-marker) > div[data-testid="column"]:nth-of-type(2) { min-width: 180px !important; }
-        div[data-testid="stHorizontalBlock"]:has(.journal-row-marker) > div[data-testid="column"]:nth-of-type(3) { min-width: 100px !important; }
-        div[data-testid="stHorizontalBlock"]:has(.journal-row-marker) > div[data-testid="column"]:nth-of-type(4) { min-width: 180px !important; }
-        div[data-testid="stHorizontalBlock"]:has(.journal-row-marker) > div[data-testid="column"]:nth-of-type(5) { min-width: 80px !important; }
+        /* Lock specific widths for journal columns to prevent stretching */
+        div[data-testid="stHorizontalBlock"]:has(.journal-row-marker) > div[data-testid="column"]:nth-of-type(1) { width: 105px !important; }
+        div[data-testid="stHorizontalBlock"]:has(.journal-row-marker) > div[data-testid="column"]:nth-of-type(2) { width: 125px !important; }
+        div[data-testid="stHorizontalBlock"]:has(.journal-row-marker) > div[data-testid="column"]:nth-of-type(3) { width: 65px !important; }
+        div[data-testid="stHorizontalBlock"]:has(.journal-row-marker) > div[data-testid="column"]:nth-of-type(4) { width: 140px !important; }
+        div[data-testid="stHorizontalBlock"]:has(.journal-row-marker) > div[data-testid="column"]:nth-of-type(5) { width: 60px !important; }
         
         /* Stop journal buttons from stacking */
         div[data-testid="stHorizontalBlock"]:has(.journal-row-marker) div[data-testid="stHorizontalBlock"] {
              flex-direction: row !important;
-             min-width: 70px !important;
+             min-width: 50px !important;
+             gap: 5px !important;
+        }
+        button[title="Delete this entry"], button[title="Load this entry"] {
+            width: 18px !important; height: 18px !important;
+            min-height: 18px !important; min-width: 18px !important;
         }
 
-        /* Force Download & Clear Buttons to be Side-by-Side on Mobile */
+        /* Force Download & Clear Buttons to be small and closer together */
         div[data-testid="stHorizontalBlock"]:has(.action-btn-marker) {
             display: flex !important;
             flex-direction: row !important;
             flex-wrap: nowrap !important;
-            gap: 15px !important;
+            justify-content: flex-start !important; /* Align left */
+            gap: 10px !important; /* Closer together */
         }
         div[data-testid="stHorizontalBlock"]:has(.action-btn-marker) > div[data-testid="column"] {
-            width: 50% !important;
-            flex: 1 1 50% !important;
+            width: auto !important;
+            flex: 0 1 auto !important;
             min-width: 0 !important;
+        }
+        /* Make button text and padding smaller */
+        div[data-testid="stHorizontalBlock"]:has(.action-btn-marker) button {
+            font-size: 11px !important;
+            padding: 2px 10px !important;
+            min-height: 32px !important;
         }
     }
     /* ------------------------------------------------------------------- */
@@ -1024,20 +1044,19 @@ with tab3:
         st.markdown("---")
         h1, h2, h3, h4, h5 = st.columns([2, 3, 2, 3, 1.2]) 
         marker = '<span class="journal-row-marker" style="display:none;"></span>'
-        h1.markdown(f"{marker}**Date & Time**" if lang == "English" else f"{marker}**දිනය සහ වේලාව**", unsafe_allow_html=True)
-        h2.markdown("**News Event**" if lang == "English" else "**නිවුස් එක**")
-        h3.markdown("**DXY Score**" if lang == "English" else "**DXY ලකුණ**")
-        h4.markdown("**Prediction**" if lang == "English" else "**පුරෝකථනය**")
-        h5.markdown("**Actions**" if lang == "English" else "**ක්‍රියාමාර්ග**")
+        h1.markdown(f"{marker}<div class='journal-header'><b>Date & Time</b></div>" if lang == "English" else f"{marker}<div class='journal-header'><b>දිනය සහ වේලාව</b></div>", unsafe_allow_html=True)
+        h2.markdown("<div class='journal-header'><b>News Event</b></div>" if lang == "English" else "<div class='journal-header'><b>නිවුස් එක</b></div>", unsafe_allow_html=True)
+        h3.markdown("<div class='journal-header'><b>DXY Score</b></div>" if lang == "English" else "<div class='journal-header'><b>DXY ලකුණ</b></div>", unsafe_allow_html=True)
+        h4.markdown("<div class='journal-header'><b>Prediction</b></div>" if lang == "English" else "<div class='journal-header'><b>පුරෝකථනය</b></div>", unsafe_allow_html=True)
+        h5.markdown("<div class='journal-header'><b>Actions</b></div>" if lang == "English" else "<div class='journal-header'><b>ක්‍රියාමාර්ග</b></div>", unsafe_allow_html=True)
         st.markdown("---")
         
         for i, entry in enumerate(st.session_state['journal']):
             c1, c2, c3, c4, c5 = st.columns([2, 3, 2, 3, 1.2])
             
-            row_style = "font-size: 14px; color: #d0d0d0; padding-top: 5px;"
-            c1.markdown(f"<div style='{row_style}'>{marker}{entry['Date & Time']}</div>", unsafe_allow_html=True)
-            c2.markdown(f"<div style='{row_style}'>{entry['News Event']}</div>", unsafe_allow_html=True)
-            c3.markdown(f"<div style='{row_style}'>{entry['DXY Score']}</div>", unsafe_allow_html=True)
+            c1.markdown(f"<div class='journal-text'>{marker}{entry['Date & Time']}</div>", unsafe_allow_html=True)
+            c2.markdown(f"<div class='journal-text'>{entry['News Event']}</div>", unsafe_allow_html=True)
+            c3.markdown(f"<div class='journal-text'>{entry['DXY Score']}</div>", unsafe_allow_html=True)
             
             pred = entry["Predicted Direction"]
             if "BULLISH" in pred: color, svg = "#00ffcc", svg_bullish
@@ -1046,7 +1065,7 @@ with tab3:
                 
             svg_small = svg.replace('width="24"', 'width="18"').replace('height="24"', 'height="18"')
             
-            pred_html = f"""<div style="display: flex; align-items: center; gap: 8px; padding-top: 5px;"><span style="font-size: 14px; font-weight: bold; color: {color};">{pred}</span><div style="display: flex; align-items: center;">{svg_small}</div></div>"""
+            pred_html = f"""<div style="display: flex; align-items: center; gap: 6px; padding-top: 5px;"><span class='pred-text' style="font-size: 14px; font-weight: bold; color: {color};">{pred}</span><div class='pred-icon' style="display: flex; align-items: center;">{svg_small}</div></div>"""
             c4.markdown(pred_html, unsafe_allow_html=True)
             
             btn_col1, btn_col2 = c5.columns(2)
@@ -1068,7 +1087,7 @@ with tab3:
                 
         # --- UI Balanced Action Buttons (Download & Clear) ---
         st.markdown("<br>", unsafe_allow_html=True)
-        dl_col, clr_col = st.columns(2)
+        dl_col, clr_col, _empty1, _empty2 = st.columns([1.5, 1.5, 1, 3])
         marker_btn = '<span class="action-btn-marker" style="display:none;"></span>'
         
         with dl_col:
