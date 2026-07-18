@@ -12,15 +12,26 @@ import extra_streamlit_components as stx
 
 st.set_page_config(page_title="Macro DXY Predictor Pro", page_icon="📈", layout="wide")
 
-# --- COOKIE MANAGER (For Auto-Login) ---
-cookie_manager = stx.CookieManager()
+# --- SMART COOKIE MANAGER (Fixes the Refresh/Logout Bug) ---
+@st.cache_resource(experimental_allow_widgets=True)
+def get_cookie_manager():
+    return stx.CookieManager()
 
-# Give browser 1 second to sync cookies securely on the very first load
-if not st.session_state.get('cookies_synced'):
-    st.session_state['cookies_synced'] = True
-    st.markdown("<br><br><br><h3 style='text-align:center; color:#1f77b4;'>Verifying Secure Session... 🔄</h3>", unsafe_allow_html=True)
-    time.sleep(1)
-    st.rerun()
+cookie_manager = get_cookie_manager()
+
+if 'cookie_retry' not in st.session_state:
+    st.session_state['cookie_retry'] = 0
+
+if not st.session_state.get('auth_verified'):
+    cookies = cookie_manager.get_all()
+    # Check if cookies are loaded from the browser yet
+    if not isinstance(cookies, dict) or len(cookies) == 0:
+        if st.session_state['cookie_retry'] < 3:
+            st.session_state['cookie_retry'] += 1
+            st.markdown("<br><br><br><h3 style='text-align:center; color:#00ffcc;'>🔄 Loading Secure Interface...</h3>", unsafe_allow_html=True)
+            time.sleep(0.4)
+            st.rerun()
+    st.session_state['auth_verified'] = True
 
 # --- SUPABASE CONFIGURATION ---
 SUPABASE_URL = "https://dtcwcaojqpsjuyzfdqlu.supabase.co"
@@ -85,53 +96,47 @@ st.sidebar.markdown("<br>", unsafe_allow_html=True)
 lang = st.sidebar.radio("🌐 Language / භාෂාව", ["English", "සිංහල"], horizontal=True)
 st.sidebar.markdown("---")
 
-# --- LOGIN / SIGNUP UI (Seamless Transition) ---
-login_container = st.empty()
-
+# --- LOGIN / SIGNUP UI ---
 if st.session_state['user'] is None:
     st.markdown("""<style>.main { background-color: #0e1117; color: #ffffff; }</style>""", unsafe_allow_html=True)
     
-    with login_container.container():
-        col1, col2, col3 = st.columns([1, 2, 1])
-        with col2:
-            title_txt = "🔐 Login to Bull Matrix Predictor" if lang == "English" else "🔐 ඇප් එකට ලොග් වෙන්න"
-            st.title(title_txt)
-            st.write("Secure Cloud Database Enabled." if lang == "English" else "ඔබගේ දත්ත Cloud එකේ ආරක්ෂිතව සේව් වේ.")
-            
-            tab_login, tab_signup = st.tabs(["Login / ඇතුල්වන්න", "Sign Up / ලියාපදිංචි වන්න"])
-            
-            with tab_login:
-                email = st.text_input("Email", key="login_email")
-                pwd = st.text_input("Password", type="password", key="login_pwd")
-                if st.button("Login", use_container_width=True):
-                    try:
-                        res = supabase.auth.sign_in_with_password({"email": email, "password": pwd})
-                        st.session_state['user'] = res.user
-                        # Save Cookies for 30 Days!
-                        cookie_manager.set('supa_access', res.session.access_token, max_age=2592000)
-                        cookie_manager.set('supa_refresh', res.session.refresh_token, max_age=2592000)
-                        fetch_journal()
-                        st.success("✅ Login Successful! Loading App..." if lang == "English" else "✅ ලොග් වීම සාර්ථකයි! ඇප් එක විවෘත වෙමින් පවතී...")
-                        time.sleep(1) # Allow browser to save cookies
-                    except Exception as e:
-                        st.error("Login Failed! Please check your credentials." if lang == "English" else "ලොග් වීමට නොහැක! Email සහ Password නිවැරදිදැයි බලන්න.")
-                        
-            with tab_signup:
-                email_up = st.text_input("New Email", key="up_email")
-                pwd_up = st.text_input("New Password", type="password", key="up_pwd")
-                if st.button("Sign Up", use_container_width=True):
-                    try:
-                        res = supabase.auth.sign_up({"email": email_up, "password": pwd_up})
-                        st.success("Account created successfully! Please login from the 'Login' tab." if lang == "English" else "ගිණුම සාර්ථකව සැකසුවා! කරුණාකර 'Login' ටැබ් එකෙන් ඇතුල්වන්න.")
-                    except Exception as e:
-                        st.error(f"Sign Up Failed: {e}")
-
-# Stop execution if STILL not logged in
-if st.session_state['user'] is None:
+    col1, col2, col3 = st.columns([1, 2, 1])
+    with col2:
+        title_txt = "🔐 Login to Bull Matrix Predictor" if lang == "English" else "🔐 ඇප් එකට ලොග් වෙන්න"
+        st.title(title_txt)
+        st.write("Secure Cloud Database Enabled." if lang == "English" else "ඔබගේ දත්ත Cloud එකේ ආරක්ෂිතව සේව් වේ.")
+        
+        tab_login, tab_signup = st.tabs(["Login / ඇතුල්වන්න", "Sign Up / ලියාපදිංචි වන්න"])
+        
+        with tab_login:
+            email = st.text_input("Email", key="login_email")
+            pwd = st.text_input("Password", type="password", key="login_pwd")
+            if st.button("Login", use_container_width=True):
+                try:
+                    res = supabase.auth.sign_in_with_password({"email": email, "password": pwd})
+                    st.session_state['user'] = res.user
+                    
+                    # Save Cookies for 30 Days for reliable Auto-Login!
+                    cookie_manager.set('supa_access', res.session.access_token, max_age=2592000)
+                    cookie_manager.set('supa_refresh', res.session.refresh_token, max_age=2592000)
+                    
+                    fetch_journal()
+                    time.sleep(0.5) 
+                    st.rerun()
+                except Exception as e:
+                    st.error("Login Failed! Please check your credentials." if lang == "English" else "ලොග් වීමට නොහැක! Email සහ Password නිවැරදිදැයි බලන්න.")
+                    
+        with tab_signup:
+            email_up = st.text_input("New Email", key="up_email")
+            pwd_up = st.text_input("New Password", type="password", key="up_pwd")
+            if st.button("Sign Up", use_container_width=True):
+                try:
+                    res = supabase.auth.sign_up({"email": email_up, "password": pwd_up})
+                    st.success("Account created successfully! Please login from the 'Login' tab." if lang == "English" else "ගිණුම සාර්ථකව සැකසුවා! කරුණාකර 'Login' ටැබ් එකෙන් ඇතුල්වන්න.")
+                except Exception as e:
+                    st.error(f"Sign Up Failed: {e}")
+                    
     st.stop()
-
-# Hide login UI once logged in
-login_container.empty()
 
 # --- SIDEBAR LOGOUT ---
 logout_txt = "Logout" if lang == "English" else "ඉවත් වන්න (Logout)"
@@ -141,9 +146,10 @@ if st.sidebar.button(logout_txt):
     cookie_manager.delete('supa_refresh')
     supabase.auth.sign_out()
     st.session_state['user'] = None
-    st.session_state['cookies_synced'] = False
-    st.sidebar.success("Logged out! Please refresh the page (F5)." if lang == "English" else "ඉවත් වුණා! කරුණාකර පේජ් එක Refresh කරන්න.")
-    st.stop()
+    st.session_state['journal'] = []
+    st.session_state['auth_verified'] = False 
+    time.sleep(0.5)
+    st.rerun()
 st.sidebar.markdown("---")
 
 # --- DYNAMIC LOAD SUFFIX ---
@@ -286,6 +292,7 @@ st.markdown("""
             padding: 0 2px !important;
             min-width: 0 !important;
         }
+        /* Proportional Column Widths */
         div[data-testid="stHorizontalBlock"]:has(.journal-row-marker) > div[data-testid="column"]:nth-of-type(1) { flex: 2 !important; width: 20% !important; }
         div[data-testid="stHorizontalBlock"]:has(.journal-row-marker) > div[data-testid="column"]:nth-of-type(2) { flex: 2.2 !important; width: 22% !important; }
         div[data-testid="stHorizontalBlock"]:has(.journal-row-marker) > div[data-testid="column"]:nth-of-type(3) { flex: 1.5 !important; width: 15% !important; }
@@ -368,6 +375,7 @@ def save_to_journal(event_name, score, direction_text, inputs_dict):
     except Exception as e:
         st.error(f"Error saving to Cloud: {e}")
 
+# --- UPDATED DATA FETCHING LOGIC ---
 def get_num_val(event_name, input_key, default_val):
     evt_cleaned = clean_evt(event_name)
     if st.session_state['loaded_data'] and st.session_state['loaded_data']['News Event'] == evt_cleaned:
