@@ -8,30 +8,8 @@ import os
 import time
 import streamlit.components.v1 as components
 from supabase import create_client, Client
-import extra_streamlit_components as stx
 
 st.set_page_config(page_title="Macro DXY Predictor Pro", page_icon="📈", layout="wide")
-
-# --- SMART COOKIE MANAGER (Fixes the Refresh/Logout Bug) ---
-@st.cache_resource(experimental_allow_widgets=True)
-def get_cookie_manager():
-    return stx.CookieManager()
-
-cookie_manager = get_cookie_manager()
-
-if 'cookie_retry' not in st.session_state:
-    st.session_state['cookie_retry'] = 0
-
-if not st.session_state.get('auth_verified'):
-    cookies = cookie_manager.get_all()
-    # Check if cookies are loaded from the browser yet
-    if not isinstance(cookies, dict) or len(cookies) == 0:
-        if st.session_state['cookie_retry'] < 3:
-            st.session_state['cookie_retry'] += 1
-            st.markdown("<br><br><br><h3 style='text-align:center; color:#00ffcc;'>🔄 Loading Secure Interface...</h3>", unsafe_allow_html=True)
-            time.sleep(0.4)
-            st.rerun()
-    st.session_state['auth_verified'] = True
 
 # --- SUPABASE CONFIGURATION ---
 SUPABASE_URL = "https://dtcwcaojqpsjuyzfdqlu.supabase.co"
@@ -78,19 +56,6 @@ def fetch_journal():
         except Exception as e:
             st.error(f"Cloud Sync Error: {e}")
 
-# --- TRY AUTO-LOGIN VIA COOKIES ---
-if st.session_state['user'] is None:
-    acc_token = cookie_manager.get('supa_access')
-    ref_token = cookie_manager.get('supa_refresh')
-    
-    if acc_token and ref_token:
-        try:
-            res = supabase.auth.set_session(acc_token, ref_token)
-            st.session_state['user'] = res.user
-            fetch_journal()
-        except Exception:
-            pass # Token expired
-
 # --- Language Toggle Switch ---
 st.sidebar.markdown("<br>", unsafe_allow_html=True)
 lang = st.sidebar.radio("🌐 Language / භාෂාව", ["English", "සිංහල"], horizontal=True)
@@ -115,13 +80,9 @@ if st.session_state['user'] is None:
                 try:
                     res = supabase.auth.sign_in_with_password({"email": email, "password": pwd})
                     st.session_state['user'] = res.user
-                    
-                    # Save Cookies for 30 Days for reliable Auto-Login!
-                    cookie_manager.set('supa_access', res.session.access_token, max_age=2592000)
-                    cookie_manager.set('supa_refresh', res.session.refresh_token, max_age=2592000)
-                    
                     fetch_journal()
-                    time.sleep(0.5) 
+                    st.success("✅ Login Successful! Loading App..." if lang == "English" else "✅ ලොග් වීම සාර්ථකයි! ඇප් එක විවෘත වෙමින් පවතී...")
+                    time.sleep(1)
                     st.rerun()
                 except Exception as e:
                     st.error("Login Failed! Please check your credentials." if lang == "English" else "ලොග් වීමට නොහැක! Email සහ Password නිවැරදිදැයි බලන්න.")
@@ -142,13 +103,9 @@ if st.session_state['user'] is None:
 logout_txt = "Logout" if lang == "English" else "ඉවත් වන්න (Logout)"
 st.sidebar.markdown(f"<div style='font-size: 13px; color: gray;'>👤 Logged in as:<br><b style='color: white;'>{st.session_state['user'].email}</b></div>", unsafe_allow_html=True)
 if st.sidebar.button(logout_txt):
-    cookie_manager.delete('supa_access')
-    cookie_manager.delete('supa_refresh')
     supabase.auth.sign_out()
     st.session_state['user'] = None
     st.session_state['journal'] = []
-    st.session_state['auth_verified'] = False 
-    time.sleep(0.5)
     st.rerun()
 st.sidebar.markdown("---")
 
@@ -163,96 +120,36 @@ st.markdown("""
     .bearish-text { color: #ff4b4b; font-weight: bold; font-size: 24px; }
     .neutral-text { color: #ffc107; font-weight: bold; font-size: 24px; }
     
-    .vertical-divider {
-        border-left: 2px solid rgba(255, 255, 255, 0.15);
-        height: 100%;
-        min-height: 520px;
-        margin: 0 auto;
-    }
-    .radar-divider {
-        border: none;
-        border-top: 1px solid rgba(255, 255, 255, 0.15);
-        margin: 25px 0;
-    }
+    .vertical-divider { border-left: 2px solid rgba(255, 255, 255, 0.15); height: 100%; min-height: 520px; margin: 0 auto; }
+    .radar-divider { border: none; border-top: 1px solid rgba(255, 255, 255, 0.15); margin: 25px 0; }
     
-    .stButton > button[kind="secondary"] {
-        border-radius: 20px !important;
-        border: 1px solid #1f77b4 !important;
-        background-color: transparent !important;
-        color: #1f77b4 !important;
-        transition: all 0.3s ease !important;
-    }
-    .stButton > button[kind="secondary"]:hover {
-        background-color: #1f77b4 !important;
-        color: white !important;
-        transform: scale(1.05);
-    }
+    .stButton > button[kind="secondary"] { border-radius: 20px !important; border: 1px solid #1f77b4 !important; background-color: transparent !important; color: #1f77b4 !important; transition: all 0.3s ease !important; }
+    .stButton > button[kind="secondary"]:hover { background-color: #1f77b4 !important; color: white !important; transform: scale(1.05); }
     
-    .stDownloadButton > button, .stButton > button[kind="primary"] {
-        border-radius: 20px !important;
-        transition: all 0.3s ease !important;
-        width: 100% !important; 
-    }
-    .stDownloadButton > button {
-        border: 1px solid #1f77b4 !important;
-        background-color: transparent !important;
-        color: #1f77b4 !important;
-    }
-    .stDownloadButton > button:hover {
-        background-color: #1f77b4 !important;
-        color: white !important;
-        transform: scale(1.05);
-    }
-    .stButton > button[kind="primary"] {
-        border: 1px solid #ff4b4b !important;
-        background-color: transparent !important;
-        color: #ff4b4b !important;
-    }
-    .stButton > button[kind="primary"]:hover {
-        background-color: #ff4b4b !important;
-        color: white !important;
-        transform: scale(1.05);
-    }
+    .stDownloadButton > button, .stButton > button[kind="primary"] { border-radius: 20px !important; transition: all 0.3s ease !important; width: 100% !important; }
+    .stDownloadButton > button { border: 1px solid #1f77b4 !important; background-color: transparent !important; color: #1f77b4 !important; }
+    .stDownloadButton > button:hover { background-color: #1f77b4 !important; color: white !important; transform: scale(1.05); }
+    .stButton > button[kind="primary"] { border: 1px solid #ff4b4b !important; background-color: transparent !important; color: #ff4b4b !important; }
+    .stButton > button[kind="primary"]:hover { background-color: #ff4b4b !important; color: white !important; transform: scale(1.05); }
     
     button[title="Delete this entry"], button[title="Load this entry"] {
-        width: 20px !important; height: 20px !important;
-        min-height: 20px !important; min-width: 20px !important;
-        padding: 0 !important; border-radius: 50% !important; 
-        background-color: transparent !important; 
-        display: inline-flex !important; align-items: center !important; justify-content: center !important;
-        transition: all 0.2s ease !important;
+        width: 20px !important; height: 20px !important; min-height: 20px !important; min-width: 20px !important;
+        padding: 0 !important; border-radius: 50% !important; background-color: transparent !important; 
+        display: inline-flex !important; align-items: center !important; justify-content: center !important; transition: all 0.2s ease !important;
     }
     button[title="Delete this entry"] { border: 1px solid #ff4b4b !important; color: #ff4b4b !important; }
     button[title="Delete this entry"]:hover { background-color: #ff4b4b !important; color: white !important; transform: scale(1.1) !important; }
     button[title="Load this entry"] { border: 1px solid #1f77b4 !important; color: #1f77b4 !important; }
     button[title="Load this entry"]:hover { background-color: #1f77b4 !important; color: white !important; transform: scale(1.1) !important; }
-    button[title="Delete this entry"] div, button[title="Delete this entry"] p,
-    button[title="Load this entry"] div, button[title="Load this entry"] p {
+    button[title="Delete this entry"] div, button[title="Delete this entry"] p, button[title="Load this entry"] div, button[title="Load this entry"] p {
         margin: 0 !important; padding: 0 !important; line-height: 1 !important; font-size: 10px !important;
-        display: flex !important; align-items: center !important; justify-content: center !important;
-        width: 100% !important; height: 100% !important; color: inherit !important;
+        display: flex !important; align-items: center !important; justify-content: center !important; width: 100% !important; height: 100% !important; color: inherit !important;
     }
 
-    div[data-baseweb="tooltip"], div[data-baseweb="popover"], div[role="tooltip"] {
-        max-width: 85vw !important;
-        white-space: normal !important;
-        word-wrap: break-word !important;
-        overflow-wrap: break-word !important;
-    }
-    div[data-baseweb="tooltip"] > div, div[data-baseweb="popover"] > div {
-        max-width: 100% !important;
-        white-space: normal !important;
-    }
+    div[data-baseweb="tooltip"], div[data-baseweb="popover"], div[role="tooltip"] { max-width: 85vw !important; white-space: normal !important; word-wrap: break-word !important; overflow-wrap: break-word !important; }
+    div[data-baseweb="tooltip"] > div, div[data-baseweb="popover"] > div { max-width: 100% !important; white-space: normal !important; }
 
-    .mobile-scroll-container {
-        display: flex;
-        flex-wrap: nowrap !important;
-        overflow-x: auto !important;
-        gap: 15px;
-        padding-bottom: 10px;
-        -webkit-overflow-scrolling: touch;
-        scrollbar-width: thin;
-    }
+    .mobile-scroll-container { display: flex; flex-wrap: nowrap !important; overflow-x: auto !important; gap: 15px; padding-bottom: 10px; -webkit-overflow-scrolling: touch; scrollbar-width: thin; }
     .mobile-scroll-container::-webkit-scrollbar { height: 6px; }
     .mobile-scroll-container::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.2); border-radius: 10px; }
     .mobile-scroll-container > div { flex: 0 0 auto !important; }
@@ -261,17 +158,8 @@ st.markdown("""
     .journal-text { font-size: 14px; color: #d0d0d0; padding-top: 5px; }
 
     /* ACTION BUTTON ALIGNMENT FIX (DESKTOP) */
-    div[data-testid="stHorizontalBlock"]:has(.action-btn-marker) {
-        display: flex !important;
-        flex-direction: row !important;
-        justify-content: flex-start !important;
-        gap: 15px !important;
-    }
-    div[data-testid="stHorizontalBlock"]:has(.action-btn-marker) > div[data-testid="column"] {
-        flex: 0 1 auto !important;
-        width: auto !important;
-        min-width: 160px !important;
-    }
+    div[data-testid="stHorizontalBlock"]:has(.action-btn-marker) { display: flex !important; flex-direction: row !important; justify-content: flex-start !important; gap: 15px !important; }
+    div[data-testid="stHorizontalBlock"]:has(.action-btn-marker) > div[data-testid="column"] { flex: 0 1 auto !important; width: auto !important; min-width: 160px !important; }
 
     @media (max-width: 768px) {
         .vertical-divider { display: none !important; }
@@ -279,20 +167,10 @@ st.markdown("""
 
         /* Compact Journal Table - Fits on Mobile Screen */
         div[data-testid="stHorizontalBlock"]:has(.journal-row-marker) {
-            display: flex !important;
-            flex-direction: row !important;
-            flex-wrap: nowrap !important;
-            width: 100% !important;
-            overflow: hidden !important;
-            padding-bottom: 5px !important;
-            gap: 2px !important;
-            align-items: center !important;
+            display: flex !important; flex-direction: row !important; flex-wrap: nowrap !important; width: 100% !important;
+            overflow: hidden !important; padding-bottom: 5px !important; gap: 2px !important; align-items: center !important;
         }
-        div[data-testid="stHorizontalBlock"]:has(.journal-row-marker) > div[data-testid="column"] {
-            padding: 0 2px !important;
-            min-width: 0 !important;
-        }
-        /* Proportional Column Widths */
+        div[data-testid="stHorizontalBlock"]:has(.journal-row-marker) > div[data-testid="column"] { padding: 0 2px !important; min-width: 0 !important; }
         div[data-testid="stHorizontalBlock"]:has(.journal-row-marker) > div[data-testid="column"]:nth-of-type(1) { flex: 2 !important; width: 20% !important; }
         div[data-testid="stHorizontalBlock"]:has(.journal-row-marker) > div[data-testid="column"]:nth-of-type(2) { flex: 2.2 !important; width: 22% !important; }
         div[data-testid="stHorizontalBlock"]:has(.journal-row-marker) > div[data-testid="column"]:nth-of-type(3) { flex: 1.5 !important; width: 15% !important; }
@@ -304,28 +182,12 @@ st.markdown("""
         .pred-text { font-size: 9px !important; display: block; }
         .pred-icon svg { width: 12px !important; height: 12px !important; }
 
-        div[data-testid="stHorizontalBlock"]:has(.journal-row-marker) div[data-testid="stHorizontalBlock"] {
-             flex-direction: row !important;
-             min-width: 0 !important;
-             gap: 2px !important;
-             justify-content: flex-start !important;
-        }
-        button[title="Delete this entry"], button[title="Load this entry"] {
-            width: 18px !important; height: 18px !important;
-            min-height: 18px !important; min-width: 18px !important;
-        }
+        div[data-testid="stHorizontalBlock"]:has(.journal-row-marker) div[data-testid="stHorizontalBlock"] { flex-direction: row !important; min-width: 0 !important; gap: 2px !important; justify-content: flex-start !important; }
+        button[title="Delete this entry"], button[title="Load this entry"] { width: 18px !important; height: 18px !important; min-height: 18px !important; min-width: 18px !important; }
 
         /* 50/50 Download and Clear Buttons on Mobile */
-        div[data-testid="stHorizontalBlock"]:has(.action-btn-marker) > div[data-testid="column"] {
-            flex: 1 1 50% !important;
-            width: 50% !important;
-            min-width: 0 !important;
-        }
-        div[data-testid="stHorizontalBlock"]:has(.action-btn-marker) button {
-            font-size: 12px !important;
-            padding: 0px 5px !important;
-            min-height: 38px !important;
-        }
+        div[data-testid="stHorizontalBlock"]:has(.action-btn-marker) > div[data-testid="column"] { flex: 1 1 50% !important; width: 50% !important; min-width: 0 !important; }
+        div[data-testid="stHorizontalBlock"]:has(.action-btn-marker) button { font-size: 12px !important; padding: 0px 5px !important; min-height: 38px !important; }
     }
     </style>
 """, unsafe_allow_html=True)
@@ -901,7 +763,7 @@ with tab3:
                 
         # --- FIXED ALIGNMENT ACTION BUTTONS ---
         st.markdown("<br>", unsafe_allow_html=True)
-        dl_col, clr_col, _empty = st.columns([2, 2, 8])
+        dl_col, clr_col = st.columns(2)
         marker_btn = '<span class="action-btn-marker" style="display:none;"></span>'
         
         with dl_col:
