@@ -6,19 +6,99 @@ import pytz
 import base64
 import os
 import streamlit.components.v1 as components
+from supabase import create_client, Client
 
 st.set_page_config(page_title="Macro DXY Predictor Pro", page_icon="📈", layout="wide")
+
+# --- SUPABASE CONFIGURATION ---
+SUPABASE_URL = "https://dtcwcaojqpsjuyzfdqlu.supabase.co"
+SUPABASE_KEY = "sb_publishable_hIHjcXuH_uAciS5Mn0fjqA_e1TGsPfk"
+
+@st.cache_resource
+def init_supabase() -> Client:
+    return create_client(SUPABASE_URL, SUPABASE_KEY)
+
+supabase = init_supabase()
+
+# Initialize Session States
+if 'user' not in st.session_state:
+    st.session_state['user'] = None
+if 'journal' not in st.session_state:
+    st.session_state['journal'] = []
+if 'loaded_data' not in st.session_state:
+    st.session_state['loaded_data'] = None
+
+# --- DATABASE FETCH FUNCTION ---
+def fetch_journal():
+    if st.session_state['user']:
+        try:
+            response = supabase.table('journal_entries').select('*').eq('user_id', st.session_state['user'].id).order('id', desc=True).execute()
+            formatted_journal = []
+            for row in response.data:
+                formatted_journal.append({
+                    "id": row["id"],
+                    "Date & Time": row["created_at"],
+                    "News Event": row["news_event"],
+                    "DXY Score": row["dxy_score"],
+                    "Predicted Direction": row["prediction"],
+                    "Inputs": row["inputs"]
+                })
+            st.session_state['journal'] = formatted_journal
+        except Exception as e:
+            st.error(f"Cloud Sync Error: {e}")
 
 # --- Language Toggle Switch ---
 st.sidebar.markdown("<br>", unsafe_allow_html=True)
 lang = st.sidebar.radio("🌐 Language / භාෂාව", ["English", "සිංහල"], horizontal=True)
 st.sidebar.markdown("---")
 
-# Initialize Session States
-if 'journal' not in st.session_state:
+# --- LOGIN / SIGNUP UI ---
+if st.session_state['user'] is None:
+    # Basic CSS for Login Page
+    st.markdown("""<style>.main { background-color: #0e1117; color: #ffffff; }</style>""", unsafe_allow_html=True)
+    
+    col1, col2, col3 = st.columns([1, 2, 1])
+    with col2:
+        title_txt = "🔐 Login to Bull Matrix Predictor" if lang == "English" else "🔐 ඇප් එකට ලොග් වෙන්න"
+        st.title(title_txt)
+        st.write("Secure Cloud Database Enabled." if lang == "English" else "ඔබගේ දත්ත Cloud එකේ ආරක්ෂිතව සේව් වේ.")
+        
+        tab_login, tab_signup = st.tabs(["Login / ඇතුල්වන්න", "Sign Up / ලියාපදිංචි වන්න"])
+        
+        with tab_login:
+            email = st.text_input("Email", key="login_email")
+            pwd = st.text_input("Password", type="password", key="login_pwd")
+            if st.button("Login", use_container_width=True):
+                try:
+                    res = supabase.auth.sign_in_with_password({"email": email, "password": pwd})
+                    st.session_state['user'] = res.user
+                    fetch_journal()
+                    st.rerun()
+                except Exception as e:
+                    st.error("Login Failed! Please check your credentials." if lang == "English" else "ලොග් වීමට නොහැක! Email සහ Password නිවැරදිදැයි බලන්න.")
+                    
+        with tab_signup:
+            email_up = st.text_input("New Email", key="up_email")
+            pwd_up = st.text_input("New Password", type="password", key="up_pwd")
+            if st.button("Sign Up", use_container_width=True):
+                try:
+                    res = supabase.auth.sign_up({"email": email_up, "password": pwd_up})
+                    st.success("Account created successfully! Please login from the 'Login' tab." if lang == "English" else "ගිණුම සාර්ථකව සැකසුවා! කරුණාකර 'Login' ටැබ් එකෙන් ඇතුල්වන්න.")
+                except Exception as e:
+                    st.error(f"Sign Up Failed: {e}")
+                    
+    st.stop() # Stops execution of the rest of the app until logged in
+
+# --- SIDEBAR LOGOUT ---
+logout_txt = "Logout" if lang == "English" else "ඉවත් වන්න (Logout)"
+st.sidebar.markdown(f"<div style='font-size: 13px; color: gray;'>👤 Logged in as:<br><b style='color: white;'>{st.session_state['user'].email}</b></div>", unsafe_allow_html=True)
+if st.sidebar.button(logout_txt):
+    supabase.auth.sign_out()
+    st.session_state['user'] = None
     st.session_state['journal'] = []
-if 'loaded_data' not in st.session_state:
-    st.session_state['loaded_data'] = None
+    st.rerun()
+st.sidebar.markdown("---")
+
 
 # --- MOBILE RESPONSIVE PROFESSIONAL UI CSS ---
 st.markdown("""
@@ -216,20 +296,24 @@ def create_gauge_chart(score):
 def save_to_journal(event_name, score, direction_text, inputs_dict):
     sl_tz = pytz.timezone('Asia/Colombo')
     current_time = datetime.datetime.now(sl_tz).strftime("%Y-%m-%d %H:%M")
-    
     clean_event = event_name.replace("🟢 ", "").replace("🟠 ", "").replace("🟣 ", "").replace("🔵 ", "").replace("🔴 ", "")
     
-    entry = {
-        "Date & Time": current_time,
-        "News Event": clean_event,
-        "DXY Score": f"{score}%",
-        "Predicted Direction": direction_text,
-        "Inputs": inputs_dict 
+    db_entry = {
+        "user_id": st.session_state['user'].id,
+        "created_at": current_time,
+        "news_event": clean_event,
+        "dxy_score": f"{score}%",
+        "prediction": direction_text,
+        "inputs": inputs_dict
     }
-    # Changed from .append(entry) to .insert(0, entry) so new saves appear at the top
-    st.session_state['journal'].insert(0, entry)
-    msg = "✅ Saved to Journal!" if lang == "English" else "✅ ජර්නල් එකට සේව් කළා!"
-    st.toast(msg)
+    
+    try:
+        supabase.table('journal_entries').insert(db_entry).execute()
+        fetch_journal() # Reload data to get the new ID and update state
+        msg = "✅ Saved to Cloud Journal!" if lang == "English" else "✅ Cloud ජර්නල් එකට සේව් කළා!"
+        st.toast(msg)
+    except Exception as e:
+        st.error(f"Error saving to Cloud: {e}")
 
 def get_idx(event_name, input_key, options_list):
     clean_event = event_name.replace("🟢 ", "").replace("🟠 ", "").replace("🟣 ", "").replace("🔵 ", "").replace("🔴 ", "")
@@ -655,7 +739,7 @@ with tab1:
         opt_pmi = ["වර්ධනය වේ (>50)", "Neutral (~50)", "අඩු වේ (<50)"] if lang == "සිංහල" else ["Expanding (>50)", "Neutral (~50)", "Contracting (<50)"]
         opt_dur = ["ඉහළ යනවා", "සාමාන්‍යයි", "පහළ යනවා"] if lang == "සිංහල" else ["Rising", "Neutral", "Falling"]
 
-        tt_gdp_prev = "Use 'Advance GDP q/q' from Forex Factory. Previous is the final figure from the last quarter." if lang == "English" else "Forex Factory හි 'Advance GDP q/q' (කාර්තුමය අගය) භාවිතා জ্ঞකරන්න. Previous යනු පසුගිය කාර්තුවේ අවසන් අගයයි."
+        tt_gdp_prev = "Use 'Advance GDP q/q' from Forex Factory. Previous is the final figure from the last quarter." if lang == "English" else "Forex Factory හි 'Advance GDP q/q' (කාර්තුමය අගය) භාවිතා කරන්න. Previous යනු පසුගිය කාර්තුවේ අවසන් අගයයි."
         tt_gdp_fc = "Enter the Market Forecast for 'Advance GDP q/q'." if lang == "English" else "Forex Factory හි 'Advance GDP q/q' සඳහා වෙළඳපොළ බලාපොරොත්තු වන Forecast අගය මෙහි යොදන්න."
         tt_atl = "Check the 'GDPNow' Live Tracker on the official Atlanta Fed website." if lang == "English" else "Atlanta Fed නිල වෙබ් අඩවියේ ඇති 'GDPNow' Live Tracker අගය බලන්න."
         tt_ret_q = "Observe the average trend of 'Retail Sales m/m' over the past 3 months." if lang == "English" else "පසුගිය මාස 3 තුළ නිකුත් වූ 'Retail Sales m/m' වල සාමාන්‍ය හැසිරීම බලන්න."
@@ -853,7 +937,6 @@ with tab2:
         st.header("📅 සජීවී දින දර්ශනය සහ මැක්‍රෝ වර්ණ සිතියම")
         st.write("පහත දැක්වෙන වර්ණ සිතියම (Color Map) උපකාර කරගෙන සජීවී දින දර්ශනය තුළ ඇති අදාළ පෙරගමන් දත්ත (Leading Indicators) පහසුවෙන් සොයාගන්න.")
     
-    # UI FIX 5: Color Map is now horizontally responsive on Mobile via Flexbox
     st.markdown("#### 🎨 🗺️ Bull Matrix Macro Color Map" if lang == "English" else "#### 🎨 🗺️ Bull Matrix මැක්‍රෝ වර්ණ සිතියම")
 
     cmap_html = f"""<div class="mobile-scroll-container">
@@ -940,7 +1023,6 @@ with tab3:
     else:
         st.markdown("---")
         h1, h2, h3, h4, h5 = st.columns([2, 3, 2, 3, 1.2]) 
-        # UI FIX 3: Hidden marker to trigger mobile CSS row alignment
         marker = '<span class="journal-row-marker" style="display:none;"></span>'
         h1.markdown(f"{marker}**Date & Time**" if lang == "English" else f"{marker}**දිනය සහ වේලාව**", unsafe_allow_html=True)
         h2.markdown("**News Event**" if lang == "English" else "**නිවුස් එක**")
@@ -949,10 +1031,6 @@ with tab3:
         h5.markdown("**Actions**" if lang == "English" else "**ක්‍රියාමාර්ග**")
         st.markdown("---")
         
-        # NOTE: reversed(list(enumerate(...))) ensures we display newest first visually 
-        # if the list was built using standard .append().
-        # However, since we now use .insert(0, entry) in save_to_journal, 
-        # the list is already newest-first! So normal enumeration works perfectly.
         for i, entry in enumerate(st.session_state['journal']):
             c1, c2, c3, c4, c5 = st.columns([2, 3, 2, 3, 1.2])
             
@@ -973,27 +1051,30 @@ with tab3:
             
             btn_col1, btn_col2 = c5.columns(2)
             
-            if btn_col1.button("🔄", key=f"load_btn_{i}", help="Load this entry" if lang == "English" else "දත්ත නැවත Load කරන්න"):
+            if btn_col1.button("🔄", key=f"load_btn_{entry['id']}", help="Load this entry" if lang == "English" else "දත්ත නැවත Load කරන්න"):
                 st.session_state['loaded_data'] = entry
                 st.toast("✅ Data Loaded! Go to the 'Live Predictor' tab." if lang == "English" else "✅ දත්ත Load කළා! 'සජීවී පුරෝකථනය' ටැබ් එකට යන්න.")
                 st.rerun()
                 
-            if btn_col2.button("✖", key=f"del_btn_{i}", help="Delete this entry" if lang == "English" else "මෙම දත්තය මකා දමන්න"):
-                st.session_state['journal'].pop(i)
-                st.rerun()
+            if btn_col2.button("✖", key=f"del_btn_{entry['id']}", help="Delete this entry" if lang == "English" else "මෙම දත්තය මකා දමන්න"):
+                try:
+                    supabase.table('journal_entries').delete().eq('id', entry['id']).execute()
+                    fetch_journal()
+                    st.rerun()
+                except Exception as e:
+                    st.error(f"Failed to delete: {e}")
             
             st.markdown("<hr style='border: none; border-top: 1px solid rgba(255, 255, 255, 0.1); margin: 12px 0;'/>", unsafe_allow_html=True)
                 
         # --- UI Balanced Action Buttons (Download & Clear) ---
         st.markdown("<br>", unsafe_allow_html=True)
-        # UI FIX 4: Marker to align Download/Clear side-by-side on mobile
         dl_col, clr_col = st.columns(2)
         marker_btn = '<span class="action-btn-marker" style="display:none;"></span>'
         
         with dl_col:
             st.markdown(marker_btn, unsafe_allow_html=True)
             df = pd.DataFrame(st.session_state['journal'])
-            df_export = df.drop(columns=['Inputs']) 
+            df_export = df.drop(columns=['Inputs', 'id']) 
             csv = df_export.to_csv(index=False).encode('utf-8')
             dl_txt = "📥 Download CSV" if lang == "English" else "📥 Download CSV" 
             st.download_button(label=dl_txt, data=csv, file_name='macro_journal.csv', mime='text/csv')
@@ -1001,9 +1082,13 @@ with tab3:
         with clr_col:
             clr_txt = "🗑️ Clear All Data" if lang == "English" else "🗑️ සියලු දත්ත මකන්න" 
             if st.button(clr_txt, type="primary"): 
-                st.session_state['journal'] = []
-                st.session_state['loaded_data'] = None
-                st.rerun()
+                try:
+                    supabase.table('journal_entries').delete().eq('user_id', st.session_state['user'].id).execute()
+                    st.session_state['journal'] = []
+                    st.session_state['loaded_data'] = None
+                    st.rerun()
+                except Exception as e:
+                    st.error(f"Failed to clear data: {e}")
 
 # --- NEW TAB: HISTORICAL CASE STUDIES ---
 with tab4:
