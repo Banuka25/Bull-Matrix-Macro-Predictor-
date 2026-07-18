@@ -36,6 +36,13 @@ st.markdown("""
         margin: 0 auto;
     }
     
+    /* Radar Divider */
+    .radar-divider {
+        border: none;
+        border-top: 1px solid rgba(255, 255, 255, 0.15);
+        margin: 25px 0;
+    }
+    
     /* General Standard Button (Save to Journal) */
     .stButton > button[kind="secondary"] {
         border-radius: 20px !important;
@@ -102,53 +109,84 @@ st.markdown("""
 
     /* ------------------------------------------------------------------- */
     /* UI FIX 1: Tooltips (Popups) cutoff fix on mobile */
-    div[data-baseweb="tooltip"], div[data-baseweb="popover"] {
+    div[data-baseweb="tooltip"], div[data-baseweb="popover"], div[role="tooltip"] {
         max-width: 85vw !important;
         white-space: normal !important;
         word-wrap: break-word !important;
-        text-align: left !important;
+        overflow-wrap: break-word !important;
+    }
+    div[data-baseweb="tooltip"] > div, div[data-baseweb="popover"] > div {
+        max-width: 100% !important;
+        white-space: normal !important;
     }
 
-    /* UI FIX 2: Vertical Divider turns into a clean Horizontal line on mobile */
-    @media (max-width: 768px) {
-        .vertical-divider {
-            min-height: 1px !important;
-            height: 1px !important;
-            border-left: none !important;
-            border-top: 2px solid rgba(255, 255, 255, 0.15) !important;
-            width: 100% !important;
-            margin: 25px 0 !important;
-        }
-    }
-
-    /* UI FIX 3: Trading Journal Horizontal Scrolling & Layout on Mobile */
-    div[data-testid="stHorizontalBlock"]:has(.journal-row-marker) {
+    /* UI FIX 2: Horizontal Scrolling Wrapper for Mobile Cards */
+    .mobile-scroll-container {
+        display: flex;
         flex-wrap: nowrap !important;
         overflow-x: auto !important;
+        gap: 15px;
         padding-bottom: 10px;
+        -webkit-overflow-scrolling: touch;
+        scrollbar-width: thin;
     }
-    div[data-testid="stHorizontalBlock"]:has(.journal-row-marker) > div[data-testid="column"]:nth-child(1) { min-width: 130px !important; }
-    div[data-testid="stHorizontalBlock"]:has(.journal-row-marker) > div[data-testid="column"]:nth-child(2) { min-width: 180px !important; }
-    div[data-testid="stHorizontalBlock"]:has(.journal-row-marker) > div[data-testid="column"]:nth-child(3) { min-width: 90px !important; }
-    div[data-testid="stHorizontalBlock"]:has(.journal-row-marker) > div[data-testid="column"]:nth-child(4) { min-width: 170px !important; }
-    div[data-testid="stHorizontalBlock"]:has(.journal-row-marker) > div[data-testid="column"]:nth-child(5) { min-width: 80px !important; }
-    
-    div[data-testid="stHorizontalBlock"]:has(.journal-row-marker) div[data-testid="stHorizontalBlock"] {
-        flex-wrap: nowrap !important;
-        min-width: 70px !important;
+    .mobile-scroll-container::-webkit-scrollbar { height: 6px; }
+    .mobile-scroll-container::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.2); border-radius: 10px; }
+    .mobile-scroll-container > div {
+        flex: 0 0 auto !important;
     }
 
-    /* UI FIX 4: Download & Clear buttons perfectly horizontal on mobile */
-    div[data-testid="stHorizontalBlock"]:has(.action-btn-marker) {
-        flex-wrap: nowrap !important;
-        gap: 15px !important;
-    }
-    div[data-testid="stHorizontalBlock"]:has(.action-btn-marker) > div[data-testid="column"] {
-        min-width: 0 !important;
-        flex: 1 1 50% !important;
+    /* UI FIX 3 & 4: Mobile Specific Adjustments */
+    @media (max-width: 768px) {
+        /* Hide vertical divider on mobile to prevent huge gaps */
+        .vertical-divider {
+            display: none !important;
+        }
+        
+        .radar-divider {
+            margin: 15px 0 !important;
+        }
+
+        /* Force Journal Rows to be horizontal and scrollable on phone */
+        div[data-testid="stHorizontalBlock"]:has(.journal-row-marker) {
+            display: flex !important;
+            flex-direction: row !important;
+            flex-wrap: nowrap !important;
+            overflow-x: auto !important;
+            overflow-y: hidden !important;
+            padding-bottom: 15px !important;
+            -webkit-overflow-scrolling: touch;
+        }
+        div[data-testid="stHorizontalBlock"]:has(.journal-row-marker) > div[data-testid="column"] {
+            width: auto !important;
+            flex: 0 0 auto !important;
+        }
+        div[data-testid="stHorizontalBlock"]:has(.journal-row-marker) > div[data-testid="column"]:nth-of-type(1) { min-width: 140px !important; }
+        div[data-testid="stHorizontalBlock"]:has(.journal-row-marker) > div[data-testid="column"]:nth-of-type(2) { min-width: 180px !important; }
+        div[data-testid="stHorizontalBlock"]:has(.journal-row-marker) > div[data-testid="column"]:nth-of-type(3) { min-width: 100px !important; }
+        div[data-testid="stHorizontalBlock"]:has(.journal-row-marker) > div[data-testid="column"]:nth-of-type(4) { min-width: 180px !important; }
+        div[data-testid="stHorizontalBlock"]:has(.journal-row-marker) > div[data-testid="column"]:nth-of-type(5) { min-width: 80px !important; }
+        
+        /* Stop journal buttons from stacking */
+        div[data-testid="stHorizontalBlock"]:has(.journal-row-marker) div[data-testid="stHorizontalBlock"] {
+             flex-direction: row !important;
+             min-width: 70px !important;
+        }
+
+        /* Force Download & Clear Buttons to be Side-by-Side on Mobile */
+        div[data-testid="stHorizontalBlock"]:has(.action-btn-marker) {
+            display: flex !important;
+            flex-direction: row !important;
+            flex-wrap: nowrap !important;
+            gap: 15px !important;
+        }
+        div[data-testid="stHorizontalBlock"]:has(.action-btn-marker) > div[data-testid="column"] {
+            width: 50% !important;
+            flex: 1 1 50% !important;
+            min-width: 0 !important;
+        }
     }
     /* ------------------------------------------------------------------- */
-
     </style>
 """, unsafe_allow_html=True)
 
@@ -188,7 +226,8 @@ def save_to_journal(event_name, score, direction_text, inputs_dict):
         "Predicted Direction": direction_text,
         "Inputs": inputs_dict 
     }
-    st.session_state['journal'].append(entry)
+    # Changed from .append(entry) to .insert(0, entry) so new saves appear at the top
+    st.session_state['journal'].insert(0, entry)
     msg = "✅ Saved to Journal!" if lang == "English" else "✅ ජර්නල් එකට සේව් කළා!"
     st.toast(msg)
 
@@ -284,20 +323,21 @@ with tab1:
 
         # UI FIX 4: Pairs and Indices are now perfectly responsive & horizontal on mobile via Flexbox
         st.subheader("🗺️ Expected Impact on Major Pairs & Gold" if lang == "English" else "🗺️ ප්‍රධාන වෙළඳපොළවල් සඳහා බලපෑම")
-        pairs_html = f"""<div style="display: flex; flex-wrap: wrap; gap: 15px; justify-content: space-between; margin-bottom: 20px;">
-        <div style="flex: 1 1 18%; min-width: 130px;">{render_custom_metric('EUR/USD', eurusd_val, eurusd_svg)}</div>
-        <div style="flex: 1 1 18%; min-width: 130px;">{render_custom_metric('GBP/USD', gbpusd_val, gbpusd_svg)}</div>
-        <div style="flex: 1 1 18%; min-width: 130px;">{render_custom_metric('XAU/USD (Gold)', xauusd_val, xauusd_svg)}</div>
-        <div style="flex: 1 1 18%; min-width: 130px;">{render_custom_metric('USD/JPY', usdjpy_val, usdjpy_svg)}</div>
-        <div style="flex: 1 1 18%; min-width: 130px;">{render_custom_metric('USD/CAD', usdcad_val, usdcad_svg)}</div>
+        pairs_html = f"""<div class="mobile-scroll-container">
+        <div style="min-width: 140px;">{render_custom_metric('EUR/USD', eurusd_val, eurusd_svg)}</div>
+        <div style="min-width: 140px;">{render_custom_metric('GBP/USD', gbpusd_val, gbpusd_svg)}</div>
+        <div style="min-width: 140px;">{render_custom_metric('XAU/USD (Gold)', xauusd_val, xauusd_svg)}</div>
+        <div style="min-width: 140px;">{render_custom_metric('USD/JPY', usdjpy_val, usdjpy_svg)}</div>
+        <div style="min-width: 140px;">{render_custom_metric('USD/CAD', usdcad_val, usdcad_svg)}</div>
         </div>"""
         st.markdown(pairs_html, unsafe_allow_html=True)
         
         st.subheader("📊 Expected Impact on Major US Indices" if lang == "English" else "📊 ප්‍රධාන දර්ශක (Indices) සඳහා බලපෑම")
-        indices_html = f"""<div style="display: flex; flex-wrap: wrap; gap: 15px; justify-content: flex-start; margin-bottom: 10px;">
-        <div style="flex: 1 1 30%; min-width: 160px; max-width: 250px;">{render_custom_metric('NASDAQ (NAS100)', nas100_val, nas100_svg)}</div>
-        <div style="flex: 1 1 30%; min-width: 160px; max-width: 250px;">{render_custom_metric('US30 (Dow Jones)', us30_val, us30_svg)}</div>
-        <div style="flex: 1 1 30%; min-width: 160px; max-width: 250px;">{render_custom_metric('S&P 500 (SPX500)', spx500_val, spx500_svg)}</div>
+        # Indices rendered horizontally even on mobile
+        indices_html = f"""<div class="mobile-scroll-container">
+        <div style="min-width: 160px;">{render_custom_metric('NASDAQ (NAS100)', nas100_val, nas100_svg)}</div>
+        <div style="min-width: 160px;">{render_custom_metric('US30 (Dow Jones)', us30_val, us30_svg)}</div>
+        <div style="min-width: 160px;">{render_custom_metric('S&P 500 (SPX500)', spx500_val, spx500_svg)}</div>
         </div>"""
         st.markdown(indices_html, unsafe_allow_html=True)
 
@@ -378,7 +418,7 @@ with tab1:
             inputs_dict = {"cpi_prev": cpi_previous, "cpi_fc": cpi_forecast, "ppi": ppi_input, "gas": gasoline, "nyfed": ny_fed, "pmi": pmi_prices, "imp": import_prices}
             render_save_button(major_news, score, direction, inputs_dict)
             
-            st.markdown("<hr style='border: none; border-top: 1px solid rgba(255, 255, 255, 0.15); margin: 25px 0;'/>", unsafe_allow_html=True)
+            st.markdown("<hr class='radar-divider' />", unsafe_allow_html=True)
 
             deviation = (score - 50) / 50.0 * 0.3 
             exp_value = cpi_forecast + deviation
@@ -477,7 +517,7 @@ with tab1:
             inputs_dict = {"nfp_prev": nfp_previous, "nfp_fc": nfp_forecast, "adp": adp_input, "ism": ism_services, "jolts": jolts, "jobless": jobless, "chal": challenger}
             render_save_button(major_news, score, direction, inputs_dict)
 
-            st.markdown("<hr style='border: none; border-top: 1px solid rgba(255, 255, 255, 0.15); margin: 25px 0;'/>", unsafe_allow_html=True)
+            st.markdown("<hr class='radar-divider' />", unsafe_allow_html=True)
 
             deviation = (score - 50) / 50.0 * 50.0 
             exp_value = nfp_forecast + deviation
@@ -494,7 +534,7 @@ with tab1:
                 dev_color = "#ff4b4b"
                 if exp_value < nfp_previous:
                     dev_signal = "📉 Big Miss & Decelerating (Strong Bearish)"
-                    dev_desc = "Significant downside surprise projected. Figures fall below both forecasts and previous data, acting as a primary bearish catalyst for the DXY." if lang == "English" else "රැකියා දත්ත ප්‍රබල ලෙස පහත වැටී ඇත. මෙය DXY එක කඩා වැට মিলিটারি ප්‍රබල හේතුවකි."
+                    dev_desc = "Significant downside surprise projected. Figures fall below both forecasts and previous data, acting as a primary bearish catalyst for the DXY." if lang == "English" else "රැකියා දත්ත ප්‍රබල ලෙස පහත වැටී ඇත. මෙය DXY එක කඩා වැටීමට ප්‍රබල හේතුවකි."
                 else:
                     dev_signal = "⚖️ Miss BUT Sticky (Fakeout Warning)"
                     dev_desc = "Data misses forecasts but shows stickiness relative to previous figures. Potential for a 'fakeout' market reversal." if lang == "English" else "දත්ත අඩුවී ඇතත් පෙර මාසයට සාපේක්ෂව ඒ මට්ටමේම පවතී. ක්ෂණික රැවටිලි (Fakeouts) ඇතිවිය හැක."
@@ -570,7 +610,7 @@ with tab1:
             inputs_dict = {"pce_prev": pce_previous, "pce_fc": pce_forecast, "cpi": cpi_input, "ppi": ppi_input, "hr": hourly_earnings, "ret": retail_sales}
             render_save_button(major_news, score, direction, inputs_dict)
 
-            st.markdown("<hr style='border: none; border-top: 1px solid rgba(255, 255, 255, 0.15); margin: 25px 0;'/>", unsafe_allow_html=True)
+            st.markdown("<hr class='radar-divider' />", unsafe_allow_html=True)
 
             deviation = (score - 50) / 50.0 * 0.2 
             exp_value = pce_forecast + deviation
@@ -615,7 +655,7 @@ with tab1:
         opt_pmi = ["වර්ධනය වේ (>50)", "Neutral (~50)", "අඩු වේ (<50)"] if lang == "සිංහල" else ["Expanding (>50)", "Neutral (~50)", "Contracting (<50)"]
         opt_dur = ["ඉහළ යනවා", "සාමාන්‍යයි", "පහළ යනවා"] if lang == "සිංහල" else ["Rising", "Neutral", "Falling"]
 
-        tt_gdp_prev = "Use 'Advance GDP q/q' from Forex Factory. Previous is the final figure from the last quarter." if lang == "English" else "Forex Factory හි 'Advance GDP q/q' (කාර්තුමය අගය) භාවිතා කරන්න. Previous යනු පසුගිය කාර්තුවේ අවසන් අගයයි."
+        tt_gdp_prev = "Use 'Advance GDP q/q' from Forex Factory. Previous is the final figure from the last quarter." if lang == "English" else "Forex Factory හි 'Advance GDP q/q' (කාර්තුමය අගය) භාවිතා জ্ঞකරන්න. Previous යනු පසුගිය කාර්තුවේ අවසන් අගයයි."
         tt_gdp_fc = "Enter the Market Forecast for 'Advance GDP q/q'." if lang == "English" else "Forex Factory හි 'Advance GDP q/q' සඳහා වෙළඳපොළ බලාපොරොත්තු වන Forecast අගය මෙහි යොදන්න."
         tt_atl = "Check the 'GDPNow' Live Tracker on the official Atlanta Fed website." if lang == "English" else "Atlanta Fed නිල වෙබ් අඩවියේ ඇති 'GDPNow' Live Tracker අගය බලන්න."
         tt_ret_q = "Observe the average trend of 'Retail Sales m/m' over the past 3 months." if lang == "English" else "පසුගිය මාස 3 තුළ නිකුත් වූ 'Retail Sales m/m' වල සාමාන්‍ය හැසිරීම බලන්න."
@@ -669,7 +709,7 @@ with tab1:
             inputs_dict = {"gdp_prev": gdp_previous, "gdp_fc": gdp_forecast, "atl": atlanta_fed, "ret": retail_input, "trade": trade_balance, "pmi": pmi_input, "dur": durable_goods}
             render_save_button(major_news, score, direction, inputs_dict)
 
-            st.markdown("<hr style='border: none; border-top: 1px solid rgba(255, 255, 255, 0.15); margin: 25px 0;'/>", unsafe_allow_html=True)
+            st.markdown("<hr class='radar-divider' />", unsafe_allow_html=True)
 
             deviation = (score - 50) / 50.0 * 0.5 
             exp_value = gdp_forecast + deviation
@@ -769,7 +809,7 @@ with tab1:
             inputs_dict = {"fomc_prev": fomc_previous, "fomc_fc": fomc_forecast, "fed": fedwatch, "inf": inflation, "lab": labor, "speak": fedspeak, "fin": fin_conditions}
             render_save_button(major_news, score, direction, inputs_dict)
 
-            st.markdown("<hr style='border: none; border-top: 1px solid rgba(255, 255, 255, 0.15); margin: 25px 0;'/>", unsafe_allow_html=True)
+            st.markdown("<hr class='radar-divider' />", unsafe_allow_html=True)
 
             deviation = (score - 50) / 50.0 * 0.25 
             exp_value = fomc_forecast + deviation
@@ -816,12 +856,12 @@ with tab2:
     # UI FIX 5: Color Map is now horizontally responsive on Mobile via Flexbox
     st.markdown("#### 🎨 🗺️ Bull Matrix Macro Color Map" if lang == "English" else "#### 🎨 🗺️ Bull Matrix මැක්‍රෝ වර්ණ සිතියම")
 
-    cmap_html = f"""<div style="display: flex; flex-wrap: wrap; gap: 10px;">
-    <div style="flex: 1 1 18%; min-width: 150px; border-left: 4px solid #00E5FF; padding-left: 10px; background-color: rgba(0,229,255,0.03); padding-top: 10px; padding-bottom: 10px; border-radius: 4px;"><b style="color: #00E5FF; font-size: 14px;">🟢 CPI</b><div style="font-size: 12px; color: #b0b0b0; margin-top: 5px; line-height: 1.4;">• Core PPI m/m<br>• WTI Crude Oil<br>• NY Fed Expect.<br>• ISM Prices Paid<br>• Import Prices</div></div>
-    <div style="flex: 1 1 18%; min-width: 150px; border-left: 4px solid #FF9800; padding-left: 10px; background-color: rgba(255,152,0,0.03); padding-top: 10px; padding-bottom: 10px; border-radius: 4px;"><b style="color: #FF9800; font-size: 14px;">🟠 NFP</b><div style="font-size: 12px; color: #b0b0b0; margin-top: 5px; line-height: 1.4;">• ADP Employment<br>• ISM Services Emp.<br>• JOLTs Job Openings<br>• Initial Jobless Claims<br>• Challenger Job Cuts</div></div>
-    <div style="flex: 1 1 18%; min-width: 150px; border-left: 4px solid #E040FB; padding-left: 10px; background-color: rgba(224,64,251,0.03); padding-top: 10px; padding-bottom: 10px; border-radius: 4px;"><b style="color: #E040FB; font-size: 14px;">🟣 Core PCE</b><div style="font-size: 12px; color: #b0b0b0; margin-top: 5px; line-height: 1.4;">• Core CPI m/m<br>• Core PPI m/m<br>• Avg Hourly Earnings<br>• Retail Sales m/m</div></div>
-    <div style="flex: 1 1 18%; min-width: 150px; border-left: 4px solid #2979FF; padding-left: 10px; background-color: rgba(41,121,255,0.03); padding-top: 10px; padding-bottom: 10px; border-radius: 4px;"><b style="color: #2979FF; font-size: 14px;">🔵 Advance GDP</b><div style="font-size: 12px; color: #b0b0b0; margin-top: 5px; line-height: 1.4;">• Atlanta Fed GDPNow<br>• Retail Sales (Q. Avg)<br>• Trade Balance<br>• ISM Composite PMI<br>• Durable Goods Orders</div></div>
-    <div style="flex: 1 1 18%; min-width: 150px; border-left: 4px solid #FF5252; padding-left: 10px; background-color: rgba(255,82,82,0.03); padding-top: 10px; padding-bottom: 10px; border-radius: 4px;"><b style="color: #FF5252; font-size: 14px;">🔴 FOMC Decision</b><div style="font-size: 12px; color: #b0b0b0; margin-top: 5px; line-height: 1.4;">• CME FedWatch<br>• Core PCE/CPI Trend<br>• Labor Market Data<br>• Recent Fedspeak<br>• Financial Conditions</div></div>
+    cmap_html = f"""<div class="mobile-scroll-container">
+    <div style="min-width: 200px; border-left: 4px solid #00E5FF; padding-left: 10px; background-color: rgba(0,229,255,0.03); padding-top: 10px; padding-bottom: 10px; padding-right: 5px; border-radius: 4px;"><b style="color: #00E5FF; font-size: 14px;">🟢 CPI</b><div style="font-size: 12px; color: #b0b0b0; margin-top: 5px; line-height: 1.4;">• Core PPI m/m<br>• WTI Crude Oil<br>• NY Fed Expect.<br>• ISM Prices Paid<br>• Import Prices</div></div>
+    <div style="min-width: 200px; border-left: 4px solid #FF9800; padding-left: 10px; background-color: rgba(255,152,0,0.03); padding-top: 10px; padding-bottom: 10px; padding-right: 5px; border-radius: 4px;"><b style="color: #FF9800; font-size: 14px;">🟠 NFP</b><div style="font-size: 12px; color: #b0b0b0; margin-top: 5px; line-height: 1.4;">• ADP Employment<br>• ISM Services Emp.<br>• JOLTs Job Openings<br>• Initial Jobless Claims<br>• Challenger Job Cuts</div></div>
+    <div style="min-width: 200px; border-left: 4px solid #E040FB; padding-left: 10px; background-color: rgba(224,64,251,0.03); padding-top: 10px; padding-bottom: 10px; padding-right: 5px; border-radius: 4px;"><b style="color: #E040FB; font-size: 14px;">🟣 Core PCE</b><div style="font-size: 12px; color: #b0b0b0; margin-top: 5px; line-height: 1.4;">• Core CPI m/m<br>• Core PPI m/m<br>• Avg Hourly Earnings<br>• Retail Sales m/m</div></div>
+    <div style="min-width: 200px; border-left: 4px solid #2979FF; padding-left: 10px; background-color: rgba(41,121,255,0.03); padding-top: 10px; padding-bottom: 10px; padding-right: 5px; border-radius: 4px;"><b style="color: #2979FF; font-size: 14px;">🔵 Advance GDP</b><div style="font-size: 12px; color: #b0b0b0; margin-top: 5px; line-height: 1.4;">• Atlanta Fed GDPNow<br>• Retail Sales (Q. Avg)<br>• Trade Balance<br>• ISM Composite PMI<br>• Durable Goods Orders</div></div>
+    <div style="min-width: 200px; border-left: 4px solid #FF5252; padding-left: 10px; background-color: rgba(255,82,82,0.03); padding-top: 10px; padding-bottom: 10px; padding-right: 5px; border-radius: 4px;"><b style="color: #FF5252; font-size: 14px;">🔴 FOMC Decision</b><div style="font-size: 12px; color: #b0b0b0; margin-top: 5px; line-height: 1.4;">• CME FedWatch<br>• Core PCE/CPI Trend<br>• Labor Market Data<br>• Recent Fedspeak<br>• Financial Conditions</div></div>
     </div>"""
     st.markdown(cmap_html, unsafe_allow_html=True)
     
@@ -900,7 +940,7 @@ with tab3:
     else:
         st.markdown("---")
         h1, h2, h3, h4, h5 = st.columns([2, 3, 2, 3, 1.2]) 
-        # UI FIX 3: Added a hidden marker to let CSS know this row needs Horizontal Scrolling on Mobile
+        # UI FIX 3: Hidden marker to trigger mobile CSS row alignment
         marker = '<span class="journal-row-marker" style="display:none;"></span>'
         h1.markdown(f"{marker}**Date & Time**" if lang == "English" else f"{marker}**දිනය සහ වේලාව**", unsafe_allow_html=True)
         h2.markdown("**News Event**" if lang == "English" else "**නිවුස් එක**")
@@ -909,11 +949,15 @@ with tab3:
         h5.markdown("**Actions**" if lang == "English" else "**ක්‍රියාමාර්ග**")
         st.markdown("---")
         
+        # NOTE: reversed(list(enumerate(...))) ensures we display newest first visually 
+        # if the list was built using standard .append().
+        # However, since we now use .insert(0, entry) in save_to_journal, 
+        # the list is already newest-first! So normal enumeration works perfectly.
         for i, entry in enumerate(st.session_state['journal']):
             c1, c2, c3, c4, c5 = st.columns([2, 3, 2, 3, 1.2])
             
             row_style = "font-size: 14px; color: #d0d0d0; padding-top: 5px;"
-            c1.markdown(f"<div style='{row_style}'>{entry['Date & Time']}</div>", unsafe_allow_html=True)
+            c1.markdown(f"<div style='{row_style}'>{marker}{entry['Date & Time']}</div>", unsafe_allow_html=True)
             c2.markdown(f"<div style='{row_style}'>{entry['News Event']}</div>", unsafe_allow_html=True)
             c3.markdown(f"<div style='{row_style}'>{entry['DXY Score']}</div>", unsafe_allow_html=True)
             
@@ -942,7 +986,7 @@ with tab3:
                 
         # --- UI Balanced Action Buttons (Download & Clear) ---
         st.markdown("<br>", unsafe_allow_html=True)
-        # UI FIX 4: Used just 2 columns and a hidden marker to force horizontal layout on mobile
+        # UI FIX 4: Marker to align Download/Clear side-by-side on mobile
         dl_col, clr_col = st.columns(2)
         marker_btn = '<span class="action-btn-marker" style="display:none;"></span>'
         
