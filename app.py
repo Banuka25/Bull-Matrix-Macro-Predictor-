@@ -186,7 +186,9 @@ st.markdown("""
         button[title="Delete this entry"], button[title="Load this entry"] { width: 18px !important; height: 18px !important; min-height: 18px !important; min-width: 18px !important; }
 
         /* 50/50 Download and Clear Buttons on Mobile */
-        div[data-testid="stHorizontalBlock"]:has(.action-btn-marker) > div[data-testid="column"] { flex: 1 1 50% !important; width: 50% !important; min-width: 0 !important; }
+        div[data-testid="stHorizontalBlock"]:has(.action-btn-marker) > div[data-testid="column"]:nth-of-type(1),
+        div[data-testid="stHorizontalBlock"]:has(.action-btn-marker) > div[data-testid="column"]:nth-of-type(2) { flex: 1 1 50% !important; width: 50% !important; min-width: 0 !important; }
+        div[data-testid="stHorizontalBlock"]:has(.action-btn-marker) > div[data-testid="column"]:nth-of-type(3) { display: none !important; }
         div[data-testid="stHorizontalBlock"]:has(.action-btn-marker) button { font-size: 12px !important; padding: 0px 5px !important; min-height: 38px !important; }
     }
     </style>
@@ -763,13 +765,14 @@ with tab3:
                 
         # --- FIXED ALIGNMENT ACTION BUTTONS ---
         st.markdown("<br>", unsafe_allow_html=True)
-        dl_col, clr_col = st.columns(2)
+        # Using specific column sizes to place them together tightly on the left
+        dl_col, clr_col, _empty_col = st.columns([1.5, 1.5, 7])
         marker_btn = '<span class="action-btn-marker" style="display:none;"></span>'
         
         with dl_col:
             st.markdown(marker_btn, unsafe_allow_html=True)
             df = pd.DataFrame(st.session_state['journal'])
-            df_export = df.drop(columns=['Inputs', 'id']) 
+            df_export = df.drop(columns=['Inputs', 'id']) if not df.empty else df
             csv = df_export.to_csv(index=False).encode('utf-8')
             dl_txt = "📥 Download CSV" if lang == "English" else "📥 Download CSV" 
             st.download_button(label=dl_txt, data=csv, file_name='macro_journal.csv', mime='text/csv')
