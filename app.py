@@ -5,10 +5,15 @@ import datetime
 import pytz
 import base64
 import os
+import time
 import streamlit.components.v1 as components
 from supabase import create_client, Client
+import extra_streamlit_components as stx
 
 st.set_page_config(page_title="Macro DXY Predictor Pro", page_icon="📈", layout="wide")
+
+# --- COOKIE MANAGER (For Auto-Login) ---
+cookie_manager = stx.CookieManager()
 
 # --- SUPABASE CONFIGURATION ---
 SUPABASE_URL = "https://dtcwcaojqpsjuyzfdqlu.supabase.co"
@@ -30,6 +35,12 @@ if 'loaded_data' not in st.session_state:
 if 'load_counter' not in st.session_state:
     st.session_state['load_counter'] = 0
 
+# --- HELPER: CLEAN EMOJIS FROM STRINGS ---
+def clean_evt(name):
+    for emoji in ["🟢 ", "🟠 ", "🟣 ", "🔵 ", "🔴 "]:
+        name = name.replace(emoji, "")
+    return name.strip()
+
 # --- DATABASE FETCH FUNCTION ---
 def fetch_journal():
     if st.session_state['user']:
@@ -48,6 +59,19 @@ def fetch_journal():
             st.session_state['journal'] = formatted_journal
         except Exception as e:
             st.error(f"Cloud Sync Error: {e}")
+
+# --- AUTO-LOGIN VIA COOKIES ---
+if st.session_state['user'] is None:
+    acc_token = cookie_manager.get('supa_access')
+    ref_token = cookie_manager.get('supa_refresh')
+    
+    if acc_token and ref_token:
+        try:
+            res = supabase.auth.set_session(acc_token, ref_token)
+            st.session_state['user'] = res.user
+            fetch_journal()
+        except Exception:
+            pass # Token expired or invalid
 
 # --- Language Toggle Switch ---
 st.sidebar.markdown("<br>", unsafe_allow_html=True)
@@ -73,7 +97,13 @@ if st.session_state['user'] is None:
                 try:
                     res = supabase.auth.sign_in_with_password({"email": email, "password": pwd})
                     st.session_state['user'] = res.user
+                    
+                    # Save Tokens to Cookies for Auto-Login
+                    cookie_manager.set('supa_access', res.session.access_token)
+                    cookie_manager.set('supa_refresh', res.session.refresh_token)
+                    
                     fetch_journal()
+                    time.sleep(0.5) # Wait a split second to ensure cookies are written
                     st.rerun()
                 except Exception as e:
                     st.error("Login Failed! Please check your credentials." if lang == "English" else "ලොග් වීමට නොහැක! Email සහ Password නිවැරදිදැයි බලන්න.")
@@ -94,13 +124,17 @@ if st.session_state['user'] is None:
 logout_txt = "Logout" if lang == "English" else "ඉවත් වන්න (Logout)"
 st.sidebar.markdown(f"<div style='font-size: 13px; color: gray;'>👤 Logged in as:<br><b style='color: white;'>{st.session_state['user'].email}</b></div>", unsafe_allow_html=True)
 if st.sidebar.button(logout_txt):
+    # Clear cookies on logout
+    cookie_manager.delete('supa_access')
+    cookie_manager.delete('supa_refresh')
+    time.sleep(0.5)
     supabase.auth.sign_out()
     st.session_state['user'] = None
     st.session_state['journal'] = []
     st.rerun()
 st.sidebar.markdown("---")
 
-# --- DYNAMIC LOAD SUFFIX (Fixes the Loading Issue) ---
+# --- DYNAMIC LOAD SUFFIX ---
 lsuf = f"_{st.session_state['load_counter']}"
 
 # --- MOBILE RESPONSIVE PROFESSIONAL UI CSS ---
@@ -208,11 +242,24 @@ st.markdown("""
     .journal-header b { font-size: 15px; }
     .journal-text { font-size: 14px; color: #d0d0d0; padding-top: 5px; }
 
+    /* ACTION BUTTON ALIGNMENT FIX (DESKTOP) */
+    div[data-testid="stHorizontalBlock"]:has(.action-btn-marker) {
+        display: flex !important;
+        flex-direction: row !important;
+        justify-content: flex-start !important;
+        gap: 15px !important;
+    }
+    div[data-testid="stHorizontalBlock"]:has(.action-btn-marker) > div[data-testid="column"] {
+        flex: 0 1 auto !important;
+        width: auto !important;
+        min-width: 160px !important;
+    }
+
     @media (max-width: 768px) {
         .vertical-divider { display: none !important; }
         .radar-divider { margin: 15px 0 !important; }
 
-        /* Compact Journal Table - Fits on Mobile Screen (No Scroll) */
+        /* Compact Journal Table - Fits on Mobile Screen */
         div[data-testid="stHorizontalBlock"]:has(.journal-row-marker) {
             display: flex !important;
             flex-direction: row !important;
@@ -251,13 +298,6 @@ st.markdown("""
         }
 
         /* 50/50 Download and Clear Buttons on Mobile */
-        div[data-testid="stHorizontalBlock"]:has(.action-btn-marker) {
-            display: flex !important;
-            flex-direction: row !important;
-            flex-wrap: nowrap !important;
-            justify-content: space-between !important;
-            gap: 10px !important;
-        }
         div[data-testid="stHorizontalBlock"]:has(.action-btn-marker) > div[data-testid="column"] {
             flex: 1 1 50% !important;
             width: 50% !important;
@@ -298,7 +338,7 @@ def create_gauge_chart(score):
 def save_to_journal(event_name, score, direction_text, inputs_dict):
     sl_tz = pytz.timezone('Asia/Colombo')
     current_time = datetime.datetime.now(sl_tz).strftime("%Y-%m-%d %H:%M")
-    clean_event = event_name.replace("🟢 ", "").replace("🟠 ", "").replace("🟣 ", "").replace("🔵 ", "").replace("🔴 ", "")
+    clean_event = clean_evt(event_name)
     
     db_entry = {
         "user_id": st.session_state['user'].id,
@@ -317,19 +357,23 @@ def save_to_journal(event_name, score, direction_text, inputs_dict):
     except Exception as e:
         st.error(f"Error saving to Cloud: {e}")
 
+# --- UPDATED DATA FETCHING LOGIC ---
+def get_num_val(event_name, input_key, default_val):
+    evt_cleaned = clean_evt(event_name)
+    if st.session_state['loaded_data'] and st.session_state['loaded_data']['News Event'] == evt_cleaned:
+        val = st.session_state['loaded_data']['Inputs'].get(input_key)
+        if val is not None:
+            try: return float(val)
+            except: pass
+    return default_val
+
 def get_idx(event_name, input_key, options_list):
-    clean_event = event_name.replace("🟢 ", "").replace("🟠 ", "").replace("🟣 ", "").replace("🔵 ", "").replace("🔴 ", "")
-    if st.session_state['loaded_data'] and st.session_state['loaded_data']['News Event'] == clean_event:
+    evt_cleaned = clean_evt(event_name)
+    if st.session_state['loaded_data'] and st.session_state['loaded_data']['News Event'] == evt_cleaned:
         val = st.session_state['loaded_data']['Inputs'].get(input_key)
         if val in options_list:
             return options_list.index(val)
     return 0
-
-def get_num_val(event_name, input_key, default_val):
-    clean_event = event_name.replace("🟢 ", "").replace("🟠 ", "").replace("🟣 ", "").replace("🔵 ", "").replace("🔴 ", "")
-    if st.session_state['loaded_data'] and st.session_state['loaded_data']['News Event'] == clean_event:
-        return st.session_state['loaded_data']['Inputs'].get(input_key, default_val)
-    return default_val
 
 svg_bullish = '''<svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><circle cx="12" cy="12" r="12" fill="#4CAF50"/><path d="M7 15 L10.5 11.5 L13 14 L17 9 M13 9 H17 V13" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>'''
 svg_bearish = '''<svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><circle cx="12" cy="12" r="12" fill="#F44336"/><path d="M7 9 L10.5 12.5 L13 10 L17 15 M13 15 H17 V11" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>'''
@@ -356,12 +400,15 @@ with tab1:
     st.sidebar.header("📅 Select Major News Event" if lang == "English" else "📅 ප්‍රධාන නිවුස් එක තෝරන්න")
     
     events_list = ["🟢 CPI (Consumer Price Index)", "🟠 NFP (Non-Farm Payrolls)", "🟣 Core PCE Price Index", "🔵 Advance GDP", "🔴 FOMC Rate Decision"]
+    
     default_event_idx = 0
-    if st.session_state['loaded_data'] and st.session_state['loaded_data']['News Event'] in [e[4:] for e in events_list]:
-        raw_events = [e[4:] for e in events_list]
-        default_event_idx = raw_events.index(st.session_state['loaded_data']['News Event'])
+    if st.session_state['loaded_data']:
+        loaded_evt = st.session_state['loaded_data']['News Event']
+        for i, e in enumerate(events_list):
+            if clean_evt(e) == loaded_evt:
+                default_event_idx = i
+                break
 
-    # Dynamic key ensures radio updates on load
     major_news = st.sidebar.radio("Choose Event:" if lang == "English" else "නිවුස් එක තෝරන්න:", events_list, index=default_event_idx, key=f"evt_radio{lsuf}")
 
     st.sidebar.markdown("<br><br><br>", unsafe_allow_html=True)
@@ -479,9 +526,8 @@ with tab1:
             elif import_prices == opt_imp[1]: score += 7.5
             
             st.plotly_chart(create_gauge_chart(score), use_container_width=True)
-            dir_txt = "Predicted DXY Direction:" if lang == "English" else "අපේක්ෂිත DXY දිශාව:"
             direction, css_class = ("BULLISH DXY 🚀", "bullish-text") if score >= 60 else ("BEARISH DXY 📉", "bearish-text") if score <= 40 else ("NEUTRAL / VOLATILE ⚖️", "neutral-text")
-            st.markdown(f"### {dir_txt} <span class='{css_class}'>{direction}</span>", unsafe_allow_html=True)
+            st.markdown(f"### Predicted DXY Direction: <span class='{css_class}'>{direction}</span>", unsafe_allow_html=True)
             render_market_metrics(score)
 
             inputs_dict = {"cpi_prev": cpi_previous, "cpi_fc": cpi_forecast, "ppi": ppi_input, "gas": gasoline, "nyfed": ny_fed, "pmi": pmi_prices, "imp": import_prices}
@@ -799,9 +845,8 @@ with tab3:
         for i, entry in enumerate(st.session_state['journal']):
             c1, c2, c3, c4, c5 = st.columns([2, 3, 2, 3, 1.2])
             
-            # String shortening for compact mobile view
-            short_date = entry['Date & Time'][5:] # E.g. "07-18 17:34"
-            short_event = entry['News Event'].split(" (")[0] # E.g. "CPI"
+            short_date = entry['Date & Time'][5:]
+            short_event = entry['News Event'].split(" (")[0]
             pred_short = entry['Predicted Direction'].replace(" DXY", "").replace(" / VOLATILE", "")
             
             c1.markdown(f"<div class='journal-text'>{marker}{short_date}</div>", unsafe_allow_html=True)
@@ -822,7 +867,7 @@ with tab3:
             
             if btn_col1.button("🔄", key=f"load_btn_{entry['id']}", help="Load this entry" if lang == "English" else "දත්ත නැවත Load කරන්න"):
                 st.session_state['loaded_data'] = entry
-                st.session_state['load_counter'] += 1 # Forces Live Predictor inputs to re-render with new values
+                st.session_state['load_counter'] += 1 
                 st.toast("✅ Data Loaded! Go to the 'Live Predictor' tab." if lang == "English" else "✅ දත්ත Load කළා! 'සජීවී පුරෝකථනය' ටැබ් එකට යන්න.")
                 st.rerun()
                 
@@ -836,7 +881,7 @@ with tab3:
             
             st.markdown("<hr style='border: none; border-top: 1px solid rgba(255, 255, 255, 0.1); margin: 12px 0;'/>", unsafe_allow_html=True)
                 
-        # --- UI Balanced Action Buttons (Download & Clear) ---
+        # --- FIXED ALIGNMENT ACTION BUTTONS ---
         st.markdown("<br>", unsafe_allow_html=True)
         dl_col, clr_col = st.columns(2)
         marker_btn = '<span class="action-btn-marker" style="display:none;"></span>'
