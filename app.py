@@ -146,8 +146,18 @@ st.markdown("""
         display: flex !important; align-items: center !important; justify-content: center !important; width: 100% !important; height: 100% !important; color: inherit !important;
     }
 
-    div[data-baseweb="tooltip"], div[data-baseweb="popover"], div[role="tooltip"] { max-width: 85vw !important; white-space: normal !important; word-wrap: break-word !important; overflow-wrap: break-word !important; }
-    div[data-baseweb="tooltip"] > div, div[data-baseweb="popover"] > div { max-width: 100% !important; white-space: normal !important; }
+    /* TOOLTIP / POPUP TEXT WRAPPING FIX FOR MOBILE */
+    div[data-baseweb="tooltip"], div[data-baseweb="popover"], div[role="tooltip"] { 
+        max-width: 85vw !important; 
+        white-space: normal !important; 
+        word-wrap: break-word !important; 
+        overflow-wrap: break-word !important; 
+    }
+    div[data-baseweb="tooltip"] > div, div[data-baseweb="popover"] > div, div[data-baseweb="tooltip"] div { 
+        max-width: 100% !important; 
+        white-space: normal !important; 
+        word-wrap: break-word !important;
+    }
 
     .mobile-scroll-container { display: flex; flex-wrap: nowrap !important; overflow-x: auto !important; gap: 15px; padding-bottom: 10px; -webkit-overflow-scrolling: touch; scrollbar-width: thin; }
     .mobile-scroll-container::-webkit-scrollbar { height: 6px; }
@@ -165,7 +175,7 @@ st.markdown("""
         .vertical-divider { display: none !important; }
         .radar-divider { margin: 15px 0 !important; }
 
-        /* SCROLLABLE Journal Table for Mobile (RESTORED SWIPE FUNCTIONALITY) */
+        /* SCROLLABLE Journal Table for Mobile */
         div[data-testid="stHorizontalBlock"]:has(.journal-row-marker) {
             display: flex !important; flex-direction: row !important; flex-wrap: nowrap !important; width: 100% !important;
             overflow-x: auto !important; overflow-y: hidden !important; -webkit-overflow-scrolling: touch; 
@@ -386,20 +396,29 @@ with tab1:
         opt_pmi = ["වේගයෙන් ඉහළ යයි (>55)", "Neutral", "පහළ යයි (<50)"] if lang == "සිංහල" else ["Increasing Rapidly (>55)", "Neutral", "Decreasing (<50)"]
         opt_imp = ["ඉහළ යනවා", "ස්ථාවරයි", "පහළ යනවා"] if lang == "සිංහල" else ["Rising", "Stable", "Falling"]
         
+        # CPI Tooltips
+        tt_cpi_prev = "Use 'Core CPI m/m' from Forex Factory. Previous is the actual figure from the last month." if lang == "English" else "Forex Factory හි 'Core CPI m/m' (මාසික අගය) භාවිතා කරන්න. Previous යනු පසුගිය මාසයේ සැබෑ අගයයි."
+        tt_cpi_fc = "Enter the Market Forecast for 'Core CPI m/m'." if lang == "English" else "Forex Factory හි 'Core CPI m/m' සඳහා වෙළඳපොළ බලාපොරොත්තු වන Forecast අගය මෙහි යොදන්න."
+        tt_ppi = "Check the 'Core PPI m/m' or 'PPI m/m' data released prior to the CPI news." if lang == "English" else "Forex Factory හි CPI නිවුස් එකට පෙර නිකුත් වූ 'Core PPI m/m' හෝ 'PPI m/m' දත්තය දෙස බලන්න."
+        tt_gas = "Observe the Crude Oil (WTI) or Gasoline chart on TradingView for the past month's trend." if lang == "English" else "TradingView හි Crude Oil (WTI) හෝ Gasoline චාට් එක පසුගිය මාසය පුරා ඉහළ ගියේද යන්න බලන්න."
+        tt_nyfed = "Check if the 'NY Fed 1-Year Inflation Expectations' increased." if lang == "English" else "මස මුලදී නිකුත් වූ 'NY Fed 1-Year Inflation' වාර්තාවේ උද්ධමන බලාපොරොත්තුව වැඩිවී ඇත්දැයි බලන්න."
+        tt_pmi = "Look at the 'Prices Paid' sub-index in the ISM Services or Manufacturing report." if lang == "English" else "මස මුලදී ආපු ISM Services හෝ Manufacturing නිවුස් එක ඇතුළේ තියෙන 'Prices Paid' අනු-දර්ශකය බලන්න."
+        tt_imp = "Check if the 'Import Price Index m/m' on Forex Factory has increased." if lang == "English" else "Forex Factory හි 'Import Price Index m/m' නිවුස් අගය ඉහළ ගොස් තිබේදැයි බලන්න."
+
         with col_left:
             st.subheader(sub_report_txt)
             col_prev, col_fc = st.columns(2)
             with col_prev:
-                cpi_previous = st.number_input(f"🟢 📉 {prev_txt} (%):", value=get_num_val(major_news, "cpi_prev", 0.3), step=0.1, format="%.1f", key=f"cpi_prev{lsuf}")
+                cpi_previous = st.number_input(f"🟢 📉 {prev_txt} (%):", value=get_num_val(major_news, "cpi_prev", 0.3), step=0.1, format="%.1f", key=f"cpi_prev{lsuf}", help=tt_cpi_prev)
             with col_fc:
-                cpi_forecast = st.number_input(f"🟢 📊 {fc_txt} (%):", value=get_num_val(major_news, "cpi_fc", 0.2), step=0.1, format="%.1f", key=f"cpi_fc{lsuf}")
+                cpi_forecast = st.number_input(f"🟢 📊 {fc_txt} (%):", value=get_num_val(major_news, "cpi_fc", 0.2), step=0.1, format="%.1f", key=f"cpi_fc{lsuf}", help=tt_cpi_fc)
             st.markdown("<br>", unsafe_allow_html=True)
 
-            ppi_input = st.selectbox("🟢 1. PPI Trend:" if lang == "English" else "🟢 1. PPI ප්‍රවණතාව:", opt_ppi, index=get_idx(major_news, "ppi", opt_ppi), key=f"cpi_ppi{lsuf}")
-            gasoline = st.selectbox("🟢 2. Gasoline Prices:" if lang == "English" else "🟢 2. ඉන්ධන මිල:", opt_gas, index=get_idx(major_news, "gas", opt_gas), key=f"cpi_gas{lsuf}")
-            ny_fed = st.selectbox("🟢 3. NY Fed 1-Yr Inflation:" if lang == "English" else "🟢 3. NY Fed උද්ධමන අපේක්ෂාව:", opt_nyfed, index=get_idx(major_news, "nyfed", opt_nyfed), key=f"cpi_nyfed{lsuf}")
-            pmi_prices = st.selectbox("🟢 4. ISM Prices Paid:" if lang == "English" else "🟢 4. ISM Prices Paid අගය:", opt_pmi, index=get_idx(major_news, "pmi", opt_pmi), key=f"cpi_pmi{lsuf}")
-            import_prices = st.selectbox("🟢 5. Import Prices:" if lang == "English" else "🟢 5. ආනයන මිල දර්ශකය:", opt_imp, index=get_idx(major_news, "imp", opt_imp), key=f"cpi_imp{lsuf}")
+            ppi_input = st.selectbox("🟢 1. PPI Trend:" if lang == "English" else "🟢 1. PPI ප්‍රවණතාව:", opt_ppi, index=get_idx(major_news, "ppi", opt_ppi), key=f"cpi_ppi{lsuf}", help=tt_ppi)
+            gasoline = st.selectbox("🟢 2. Gasoline Prices:" if lang == "English" else "🟢 2. ඉන්ධන මිල:", opt_gas, index=get_idx(major_news, "gas", opt_gas), key=f"cpi_gas{lsuf}", help=tt_gas)
+            ny_fed = st.selectbox("🟢 3. NY Fed 1-Yr Inflation:" if lang == "English" else "🟢 3. NY Fed උද්ධමන අපේක්ෂාව:", opt_nyfed, index=get_idx(major_news, "nyfed", opt_nyfed), key=f"cpi_nyfed{lsuf}", help=tt_nyfed)
+            pmi_prices = st.selectbox("🟢 4. ISM Prices Paid:" if lang == "English" else "🟢 4. ISM Prices Paid අගය:", opt_pmi, index=get_idx(major_news, "pmi", opt_pmi), key=f"cpi_pmi{lsuf}", help=tt_pmi)
+            import_prices = st.selectbox("🟢 5. Import Prices:" if lang == "English" else "🟢 5. ආනයන මිල දර්ශකය:", opt_imp, index=get_idx(major_news, "imp", opt_imp), key=f"cpi_imp{lsuf}", help=tt_imp)
             
         with col_mid: st.markdown('<div class="vertical-divider"></div>', unsafe_allow_html=True)
             
@@ -453,20 +472,29 @@ with tab1:
         opt_jobless = ["අඛණ්ඩව අඩුයි (<200k)", "Neutral", "වේගයෙන් ඉහළ යයි (>250k)"] if lang == "සිංහල" else ["Consistently Low (<200k)", "Neutral", "Rising Rapidly (>250k)"]
         opt_chal = ["අඩු රැකියා කප්පාදුවක්", "සාමාන්‍යයි", "වැඩි රැකියා කප්පාදුවක්"] if lang == "සිංහල" else ["Low Layoffs", "Average", "High Layoffs"]
 
+        # NFP Tooltips
+        tt_nfp_prev = "Use 'Non-Farm Employment Change' from Forex Factory. (e.g., For 200K, enter 200)." if lang == "English" else "Forex Factory හි 'Non-Farm Employment Change' අගය භාවිතා කරන්න. (උදා: 200K නම් 200 ලෙස පමණක් යොදන්න)."
+        tt_nfp_fc = "Enter the Market Forecast for 'Non-Farm Employment Change'." if lang == "English" else "Forex Factory හි 'Non-Farm Employment Change' සඳහා වෙළඳපොළ බලාපොරොත්තු වන Forecast අගය මෙහි යොදන්න."
+        tt_adp = "Check the 'ADP Non-Farm Employment Change' released on Wednesday of the NFP week." if lang == "English" else "NFP සතියේ බදාදා නිකුත් වන 'ADP Non-Farm Employment Change' දත්තය බලන්න."
+        tt_ism = "Look at the 'Employment' sub-index in the ISM Services PMI report." if lang == "English" else "මස මුලදී නිකුත් වන ISM Services PMI නිවුස් එක ඇතුළේ තියෙන 'Employment' අනු-දර්ශකය බලන්න."
+        tt_jolts = "Check if job vacancies increased in the recently released 'JOLTs Job Openings' report." if lang == "English" else "මෑතකදී නිකුත් වූ 'JOLTs Job Openings' වාර්තාවේ රැකියා පුරප්පාඩු වැඩි වී ඇත්දැයි බලන්න."
+        tt_jobless = "Observe the 4-week average of 'Initial Jobless Claims'. (Is it consistently low?)." if lang == "English" else "පසුගිය මාසයේ සතිපතා නිකුත් වූ 'Unemployment Claims' වල සාමාන්‍යය 200k-250k අතර කෙසේ තිබුණේදැයි බලන්න."
+        tt_chal = "Check the 'Challenger Job Cuts' report released on Thursday of the NFP week." if lang == "English" else "NFP සතියේ බ්‍රහස්පතින්දා නිකුත් වන 'Challenger Job Cuts' වාර්තාව දෙස බලන්න."
+
         with col_left:
             st.subheader(sub_report_txt)
             col_prev, col_fc = st.columns(2)
             with col_prev:
-                nfp_previous = st.number_input(f"🟠 📉 {prev_txt} (k):", value=int(get_num_val(major_news, "nfp_prev", 200)), step=10, format="%d", key=f"nfp_prev{lsuf}")
+                nfp_previous = st.number_input(f"🟠 📉 {prev_txt} (k):", value=int(get_num_val(major_news, "nfp_prev", 200)), step=10, format="%d", key=f"nfp_prev{lsuf}", help=tt_nfp_prev)
             with col_fc:
-                nfp_forecast = st.number_input(f"🟠 📊 {fc_txt} (k):", value=int(get_num_val(major_news, "nfp_fc", 180)), step=10, format="%d", key=f"nfp_fc{lsuf}")
+                nfp_forecast = st.number_input(f"🟠 📊 {fc_txt} (k):", value=int(get_num_val(major_news, "nfp_fc", 180)), step=10, format="%d", key=f"nfp_fc{lsuf}", help=tt_nfp_fc)
             st.markdown("<br>", unsafe_allow_html=True)
 
-            adp_input = st.selectbox("🟠 1. ADP Employment:", opt_adp, index=get_idx(major_news, "adp", opt_adp), key=f"nfp_adp{lsuf}")
-            ism_services = st.selectbox("🟠 2. ISM Services Emp:", opt_ism, index=get_idx(major_news, "ism", opt_ism), key=f"nfp_ism{lsuf}")
-            jolts = st.selectbox("🟠 3. JOLTs Job Openings:", opt_jolts, index=get_idx(major_news, "jolts", opt_jolts), key=f"nfp_jolts{lsuf}")
-            jobless = st.selectbox("🟠 4. Initial Jobless Claims:", opt_jobless, index=get_idx(major_news, "jobless", opt_jobless), key=f"nfp_jobless{lsuf}")
-            challenger = st.selectbox("🟠 5. Challenger Job Cuts:", opt_chal, index=get_idx(major_news, "chal", opt_chal), key=f"nfp_chal{lsuf}")
+            adp_input = st.selectbox("🟠 1. ADP Employment:", opt_adp, index=get_idx(major_news, "adp", opt_adp), key=f"nfp_adp{lsuf}", help=tt_adp)
+            ism_services = st.selectbox("🟠 2. ISM Services Emp:", opt_ism, index=get_idx(major_news, "ism", opt_ism), key=f"nfp_ism{lsuf}", help=tt_ism)
+            jolts = st.selectbox("🟠 3. JOLTs Job Openings:", opt_jolts, index=get_idx(major_news, "jolts", opt_jolts), key=f"nfp_jolts{lsuf}", help=tt_jolts)
+            jobless = st.selectbox("🟠 4. Initial Jobless Claims:", opt_jobless, index=get_idx(major_news, "jobless", opt_jobless), key=f"nfp_jobless{lsuf}", help=tt_jobless)
+            challenger = st.selectbox("🟠 5. Challenger Job Cuts:", opt_chal, index=get_idx(major_news, "chal", opt_chal), key=f"nfp_chal{lsuf}", help=tt_chal)
             
         with col_mid: st.markdown('<div class="vertical-divider"></div>', unsafe_allow_html=True)
             
@@ -519,19 +547,27 @@ with tab1:
         opt_hr = ["ඉතා වේගයෙන් වැඩිවේ", "ස්ථාවරයි", "පහළ යමින් පවතී"] if lang == "සිංහල" else ["Rising Faster", "Stable", "Cooling Down"]
         opt_ret = ["ප්‍රබලයි (වැඩි පාරිභෝගික වියදම්)", "Neutral", "දුර්වලයි (අඩු පාරිභෝගික වියදම්)"] if lang == "සිංහල" else ["Strong (High Spending)", "Neutral", "Weak (Low Spending)"]
 
+        # PCE Tooltips
+        tt_pce_prev = "Use 'Core PCE Price Index m/m' from Forex Factory." if lang == "English" else "Forex Factory හි 'Core PCE Price Index m/m' (මාසික අගය) භාවිතා කරන්න."
+        tt_pce_fc = "Enter the Market Forecast for 'Core PCE m/m'." if lang == "English" else "Forex Factory හි 'Core PCE m/m' සඳහා Forecast අගය මෙහි යොදන්න."
+        tt_cpi_rc = "Check the 'Core CPI m/m' released earlier for the same month." if lang == "English" else "PCE නිවුස් එකට පෙර නිකුත් වූ එම මාසයටම අදාළ 'Core CPI m/m' දත්තය දෙස බලන්න."
+        tt_ppi_rc = "Check the 'Core PPI m/m' released earlier for the same month." if lang == "English" else "PCE නිවුස් එකට පෙර නිකුත් වූ එම මාසයටම අදාළ 'Core PPI m/m' දත්තය දෙස බලන්න."
+        tt_hr = "Check the wage growth pace in the 'Average Hourly Earnings m/m' released on NFP day." if lang == "English" else "NFP දින නිකුත් වූ 'Average Hourly Earnings m/m' හි පඩි වැඩිවීමේ වේගය බලන්න."
+        tt_ret = "Check if 'Retail Sales m/m' or 'Personal Income m/m' have increased." if lang == "English" else "Forex Factory හි 'Retail Sales m/m' හෝ 'Personal Income m/m' දත්තයන් ඉහළ ගොස් ඇත්දැයි බලන්න."
+
         with col_left:
             st.subheader(sub_report_txt)
             col_prev, col_fc = st.columns(2)
             with col_prev:
-                pce_previous = st.number_input(f"🟣 📉 {prev_txt} (%):", value=get_num_val(major_news, "pce_prev", 0.3), step=0.1, format="%.1f", key=f"pce_prev{lsuf}")
+                pce_previous = st.number_input(f"🟣 📉 {prev_txt} (%):", value=get_num_val(major_news, "pce_prev", 0.3), step=0.1, format="%.1f", key=f"pce_prev{lsuf}", help=tt_pce_prev)
             with col_fc:
-                pce_forecast = st.number_input(f"🟣 📊 {fc_txt} (%):", value=get_num_val(major_news, "pce_fc", 0.2), step=0.1, format="%.1f", key=f"pce_fc{lsuf}")
+                pce_forecast = st.number_input(f"🟣 📊 {fc_txt} (%):", value=get_num_val(major_news, "pce_fc", 0.2), step=0.1, format="%.1f", key=f"pce_fc{lsuf}", help=tt_pce_fc)
             st.markdown("<br>", unsafe_allow_html=True)
 
-            cpi_input = st.selectbox("🟣 1. Recent Core CPI:", opt_cpi, index=get_idx(major_news, "cpi", opt_cpi), key=f"pce_cpi{lsuf}")
-            ppi_input = st.selectbox("🟣 2. Recent Core PPI:", opt_ppi, index=get_idx(major_news, "ppi", opt_ppi), key=f"pce_ppi{lsuf}")
-            hourly_earnings = st.selectbox("🟣 3. Avg Hourly Earnings:", opt_hr, index=get_idx(major_news, "hr", opt_hr), key=f"pce_hr{lsuf}")
-            retail_sales = st.selectbox("🟣 4. Retail Sales:", opt_ret, index=get_idx(major_news, "ret", opt_ret), key=f"pce_ret{lsuf}")
+            cpi_input = st.selectbox("🟣 1. Recent Core CPI:", opt_cpi, index=get_idx(major_news, "cpi", opt_cpi), key=f"pce_cpi{lsuf}", help=tt_cpi_rc)
+            ppi_input = st.selectbox("🟣 2. Recent Core PPI:", opt_ppi, index=get_idx(major_news, "ppi", opt_ppi), key=f"pce_ppi{lsuf}", help=tt_ppi_rc)
+            hourly_earnings = st.selectbox("🟣 3. Avg Hourly Earnings:", opt_hr, index=get_idx(major_news, "hr", opt_hr), key=f"pce_hr{lsuf}", help=tt_hr)
+            retail_sales = st.selectbox("🟣 4. Retail Sales:", opt_ret, index=get_idx(major_news, "ret", opt_ret), key=f"pce_ret{lsuf}", help=tt_ret)
             
         with col_mid: st.markdown('<div class="vertical-divider"></div>', unsafe_allow_html=True)
             
@@ -583,20 +619,29 @@ with tab1:
         opt_pmi = ["වර්ධනය වේ (>50)", "Neutral (~50)", "අඩු වේ (<50)"] if lang == "සිංහල" else ["Expanding (>50)", "Neutral (~50)", "Contracting (<50)"]
         opt_dur = ["ඉහළ යනවා", "සාමාන්‍යයි", "පහළ යනවා"] if lang == "සිංහල" else ["Rising", "Neutral", "Falling"]
 
+        # GDP Tooltips
+        tt_gdp_prev = "Use 'Advance GDP q/q' from Forex Factory." if lang == "English" else "Forex Factory හි 'Advance GDP q/q' (කාර්තුමය අගය) භාවිතා කරන්න."
+        tt_gdp_fc = "Enter the Market Forecast for 'Advance GDP q/q'." if lang == "English" else "Forex Factory හි 'Advance GDP q/q' සඳහා Forecast අගය මෙහි යොදන්න."
+        tt_atl = "Check the 'GDPNow' Live Tracker on the official Atlanta Fed website." if lang == "English" else "Atlanta Fed නිල වෙබ් අඩවියේ ඇති 'GDPNow' Live Tracker අගය බලන්න."
+        tt_ret_q = "Observe the average trend of 'Retail Sales m/m' over the past 3 months." if lang == "English" else "පසුගිය මාස 3 තුළ නිකුත් වූ 'Retail Sales m/m' වල සාමාන්‍ය හැසිරීම බලන්න."
+        tt_trade = "Check if the export-import gap has narrowed via the 'Trade Balance' news." if lang == "English" else "'Trade Balance' නිවුස් හරහා අපනයන සහ ආනයන පරතරය අඩු වී ඇත්දැයි බලන්න."
+        tt_pmi_c = "Look at the average of ISM Manufacturing and Services PMIs over the past 3 months." if lang == "English" else "පසුගිය මාස 3 තුළ ISM Manufacturing සහ Services PMI වල සාමාන්‍ය තත්ත්වය බලන්න."
+        tt_dur = "Check the recently released 'Core Durable Goods Orders m/m' data." if lang == "English" else "මෑතකදී නිකුත් වූ 'Core Durable Goods Orders m/m' දත්තය දෙස බලන්න."
+
         with col_left:
             st.subheader(sub_report_txt)
             col_prev, col_fc = st.columns(2)
             with col_prev:
-                gdp_previous = st.number_input(f"🔵 📉 {prev_txt} (%):", value=get_num_val(major_news, "gdp_prev", 2.1), step=0.1, format="%.1f", key=f"gdp_prev{lsuf}")
+                gdp_previous = st.number_input(f"🔵 📉 {prev_txt} (%):", value=get_num_val(major_news, "gdp_prev", 2.1), step=0.1, format="%.1f", key=f"gdp_prev{lsuf}", help=tt_gdp_prev)
             with col_fc:
-                gdp_forecast = st.number_input(f"🔵 📊 {fc_txt} (%):", value=get_num_val(major_news, "gdp_fc", 1.8), step=0.1, format="%.1f", key=f"gdp_fc{lsuf}")
+                gdp_forecast = st.number_input(f"🔵 📊 {fc_txt} (%):", value=get_num_val(major_news, "gdp_fc", 1.8), step=0.1, format="%.1f", key=f"gdp_fc{lsuf}", help=tt_gdp_fc)
             st.markdown("<br>", unsafe_allow_html=True)
 
-            atlanta_fed = st.selectbox("🔵 1. Atlanta Fed GDPNow:", opt_atl, index=get_idx(major_news, "atl", opt_atl), key=f"gdp_atl{lsuf}")
-            retail_input = st.selectbox("🔵 2. Retail Sales (Quarterly):", opt_ret, index=get_idx(major_news, "ret", opt_ret), key=f"gdp_ret{lsuf}")
-            trade_balance = st.selectbox("🔵 3. Trade Balance:", opt_trade, index=get_idx(major_news, "trade", opt_trade), key=f"gdp_trade{lsuf}")
-            pmi_input = st.selectbox("🔵 4. ISM Composite PMI:", opt_pmi, index=get_idx(major_news, "pmi", opt_pmi), key=f"gdp_pmi{lsuf}")
-            durable_goods = st.selectbox("🔵 5. Durable Goods Orders:", opt_dur, index=get_idx(major_news, "dur", opt_dur), key=f"gdp_dur{lsuf}")
+            atlanta_fed = st.selectbox("🔵 1. Atlanta Fed GDPNow:", opt_atl, index=get_idx(major_news, "atl", opt_atl), key=f"gdp_atl{lsuf}", help=tt_atl)
+            retail_input = st.selectbox("🔵 2. Retail Sales (Quarterly):", opt_ret, index=get_idx(major_news, "ret", opt_ret), key=f"gdp_ret{lsuf}", help=tt_ret_q)
+            trade_balance = st.selectbox("🔵 3. Trade Balance:", opt_trade, index=get_idx(major_news, "trade", opt_trade), key=f"gdp_trade{lsuf}", help=tt_trade)
+            pmi_input = st.selectbox("🔵 4. ISM Composite PMI:", opt_pmi, index=get_idx(major_news, "pmi", opt_pmi), key=f"gdp_pmi{lsuf}", help=tt_pmi_c)
+            durable_goods = st.selectbox("🔵 5. Durable Goods Orders:", opt_dur, index=get_idx(major_news, "dur", opt_dur), key=f"gdp_dur{lsuf}", help=tt_dur)
             
         with col_mid: st.markdown('<div class="vertical-divider"></div>', unsafe_allow_html=True)
             
@@ -650,21 +695,30 @@ with tab1:
         opt_speak = ["Hawkish දැඩි ප්‍රකාශ", "Neutral", "Dovish ලිහිල් ප්‍රකාශ"] if lang == "සිංහල" else ["Hawkish Rhetoric", "Neutral", "Dovish Rhetoric"]
         opt_fin = ["ලිහිල් (මුදල් සැපයුම වැඩියි)", "Neutral", "තදයි (මුදල් සැපයුම අඩුයි)"] if lang == "සිංහල" else ["Loose (Requires Tightening)", "Neutral", "Tight (Requires Easing)"]
 
+        # FOMC Tooltips
+        tt_fomc_prev = "Use 'Federal Funds Rate' from Forex Factory." if lang == "English" else "Forex Factory හි 'Federal Funds Rate' අගය භාවිතා කරන්න."
+        tt_fomc_fc = "Enter the Market Forecast for the 'Federal Funds Rate'." if lang == "English" else "Forex Factory හි 'Federal Funds Rate' සඳහා වෙළඳපොළ අපේක්ෂාව මෙහි යොදන්න."
+        tt_fed = "Check the probability expected by investors via the 'FedWatch Tool' on the CME Group website." if lang == "English" else "CME Group වෙබ් අඩවියේ 'FedWatch Tool' හරහා ආයෝජකයින් බලාපොරොත්තු වන ප්‍රතිශතය බලන්න."
+        tt_inf = "Observe the direction of US Core CPI and Core PCE inflation over the past 2-3 months." if lang == "English" else "පසුගිය මාස 2-3 තුළ ඇමෙරිකානු Core CPI සහ Core PCE උද්ධමනය ගමන් කළ දිශාව බලන්න."
+        tt_lab = "Consider the strength of recently released NFP and Jobless Claims data." if lang == "English" else "මෑතකදී නිකුත් වූ NFP සහ Jobless Claims දත්ත වල ශක්තිමත්භාවය සලකා බලන්න."
+        tt_speak = "Determine if recent speeches by Fed officials (Powell, Waller, etc.) were Hawkish or Dovish." if lang == "English" else "Fed නිලධාරීන් මෑතකදී කළ කතාබහ Hawkish ද Dovish ද යන්න බලන්න."
+        tt_fin = "Check the market money supply via indices like the Chicago Fed NFCI." if lang == "English" else "Chicago Fed NFCI වැනි දර්ශක හරහා වෙළඳපොළේ මුදල් සැපයුම කෙසේදැයි බලන්න."
+
         with col_left:
             st.subheader(sub_report_txt)
             col_prev, col_fc = st.columns(2)
             with col_prev:
                 pr_txt = "📉 Previous Rate" if lang == "English" else "📉 පෙර අනුපාතය"
-                fomc_previous = st.number_input(f"🔴 {pr_txt} (%):", value=get_num_val(major_news, "fomc_prev", 5.50), step=0.25, format="%.2f", key=f"fomc_prev{lsuf}")
+                fomc_previous = st.number_input(f"🔴 {pr_txt} (%):", value=get_num_val(major_news, "fomc_prev", 5.50), step=0.25, format="%.2f", key=f"fomc_prev{lsuf}", help=tt_fomc_prev)
             with col_fc:
-                fomc_forecast = st.number_input(f"🔴 📊 {fc_txt} (%):", value=get_num_val(major_news, "fomc_fc", 5.25), step=0.25, format="%.2f", key=f"fomc_fc{lsuf}")
+                fomc_forecast = st.number_input(f"🔴 📊 {fc_txt} (%):", value=get_num_val(major_news, "fomc_fc", 5.25), step=0.25, format="%.2f", key=f"fomc_fc{lsuf}", help=tt_fomc_fc)
             st.markdown("<br>", unsafe_allow_html=True)
 
-            fedwatch = st.selectbox("🔴 1. CME FedWatch Probability:", opt_fed, index=get_idx(major_news, "fed", opt_fed), key=f"fomc_fed{lsuf}")
-            inflation = st.selectbox("🔴 2. Recent PCE/CPI Trend:", opt_inf, index=get_idx(major_news, "inf", opt_inf), key=f"fomc_inf{lsuf}")
-            labor = st.selectbox("🔴 3. Recent Labor Market:", opt_lab, index=get_idx(major_news, "lab", opt_lab), key=f"fomc_lab{lsuf}")
-            fedspeak = st.selectbox("🔴 4. Fedspeak / Dot Plot:", opt_speak, index=get_idx(major_news, "speak", opt_speak), key=f"fomc_speak{lsuf}")
-            fin_conditions = st.selectbox("🔴 5. Financial Conditions:", opt_fin, index=get_idx(major_news, "fin", opt_fin), key=f"fomc_fin{lsuf}")
+            fedwatch = st.selectbox("🔴 1. CME FedWatch Probability:", opt_fed, index=get_idx(major_news, "fed", opt_fed), key=f"fomc_fed{lsuf}", help=tt_fed)
+            inflation = st.selectbox("🔴 2. Recent PCE/CPI Trend:", opt_inf, index=get_idx(major_news, "inf", opt_inf), key=f"fomc_inf{lsuf}", help=tt_inf)
+            labor = st.selectbox("🔴 3. Recent Labor Market:", opt_lab, index=get_idx(major_news, "lab", opt_lab), key=f"fomc_lab{lsuf}", help=tt_lab)
+            fedspeak = st.selectbox("🔴 4. Fedspeak / Dot Plot:", opt_speak, index=get_idx(major_news, "speak", opt_speak), key=f"fomc_speak{lsuf}", help=tt_speak)
+            fin_conditions = st.selectbox("🔴 5. Financial Conditions:", opt_fin, index=get_idx(major_news, "fin", opt_fin), key=f"fomc_fin{lsuf}", help=tt_fin)
             
         with col_mid: st.markdown('<div class="vertical-divider"></div>', unsafe_allow_html=True)
             
